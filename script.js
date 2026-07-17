@@ -1,13 +1,10 @@
 /* ==========================================================================
-   script.js - DESTINY DRAW MOBILE-FIRST NATIVE ENGINE
+   script.js - DESTINY DRAW MOBILE-FIRST NATIVE ENGINE (CRASH-PROOF)
    ========================================================================== */
 
 (function () {
     'use strict';
 
-    // ---------------------------------------------------------
-    // DEFINED ROLES FOR THE POOL
-    // ---------------------------------------------------------
     const DEFINED_ROLES = [
         "Leader",
         "Opening Prayer",
@@ -30,9 +27,6 @@
         { id: 2, name: "CYBER POP", desc: "TAP EVERY BUBBLE TO POP IT BEFORE TIME RUNS OUT!" }
     ];
 
-    // ---------------------------------------------------------
-    // STATE ENGINE
-    // ---------------------------------------------------------
     let AppState = {
         assignedRoles: {},
         history: [],
@@ -48,69 +42,76 @@
     let GameTimerCountdown = 0;
     let GameRuntimeData = {};
 
-    // ---------------------------------------------------------
-    // DOM MAP
-    // ---------------------------------------------------------
-    const DOM = {
-        viewport: document.getElementById('app-viewport'),
-        views: {
-            inputName: document.getElementById('view-input-name'),
-            gameIntro: document.getElementById('view-game-intro'),
-            gameArena: document.getElementById('view-game-arena'),
-            gameResult: document.getElementById('view-game-result'),
-            destiny: document.getElementById('view-destiny'),
-            resolution: document.getElementById('view-resolution'),
-            summary: document.getElementById('view-summary')
-        },
-        inputs: {
-            playerName: document.getElementById('player-name-input')
-        },
-        buttons: {
-            startJourney: document.getElementById('btn-start-journey'),
-            continueJourney: document.getElementById('btn-continue-journey'),
-            triggerRoulette: document.getElementById('btn-trigger-roulette'),
-            finishTurn: document.getElementById('btn-finish-turn'),
-            restartFull: document.getElementById('btn-restart-full'),
-            resetSession: document.getElementById('btn-reset-session'),
-            toggleTray: document.getElementById('btn-toggle-tray'),
-            closeTray: document.getElementById('btn-close-tray')
-        },
-        displays: {
-            statusTray: document.getElementById('status-tray'),
-            rolesList: document.getElementById('roles-list'),
-            historyList: document.getElementById('history-list'),
-            introGameTitle: document.getElementById('intro-game-title'),
-            introGameName: document.getElementById('intro-game-name'),
-            introGameDesc: document.getElementById('intro-game-desc'),
-            introCountdown: document.getElementById('intro-countdown'),
-            arenaGameName: document.getElementById('arena-game-name'),
-            arenaTimer: document.getElementById('arena-timer'),
-            arenaScore: document.getElementById('arena-score-tracking'),
-            arenaSurface: document.getElementById('arena-surface'),
-            resultTitle: document.getElementById('result-status-title'),
-            resultDesc: document.getElementById('result-status-desc'),
-            destinyTitle: document.getElementById('destiny-title'),
-            destinySubtitle: document.getElementById('destiny-subtitle'),
-            roleGrid: document.getElementById('role-selection-grid'),
-            randomizerMachine: document.getElementById('randomizer-machine'),
-            randomizerRoulette: document.getElementById('randomizer-roulette'),
-            resolutionTitle: document.getElementById('resolution-outcome-title'),
-            resolvedCardInner: document.querySelector('#resolved-role-card .card-inner'),
-            summaryTableBody: document.getElementById('summary-table-body')
-        }
-    };
+    // Dom elements will be safely assigned at runtime
+    let DOM = {};
 
-    // ---------------------------------------------------------
-    // SYSTEM FEEDBACK / FX
-    // ---------------------------------------------------------
+    function init() {
+        // Safe DOM query assignment to prevent crashes if an ID is missing
+        DOM = {
+            viewport: document.getElementById('app-viewport'),
+            views: {
+                inputName: document.getElementById('view-input-name'),
+                gameIntro: document.getElementById('view-game-intro'),
+                gameArena: document.getElementById('view-game-arena'),
+                gameResult: document.getElementById('view-game-result'),
+                destiny: document.getElementById('view-destiny'),
+                resolution: document.getElementById('view-resolution'),
+                summary: document.getElementById('view-summary')
+            },
+            inputs: {
+                playerName: document.getElementById('player-name-input')
+            },
+            buttons: {
+                startJourney: document.getElementById('btn-start-journey'),
+                continueJourney: document.getElementById('btn-continue-journey'),
+                triggerRoulette: document.getElementById('btn-trigger-roulette'),
+                finishTurn: document.getElementById('btn-finish-turn'),
+                restartFull: document.getElementById('btn-restart-full'),
+                resetSession: document.getElementById('btn-reset-session'),
+                toggleTray: document.getElementById('btn-toggle-tray'),
+                closeTray: document.getElementById('btn-close-tray')
+            },
+            displays: {
+                statusTray: document.getElementById('status-tray'),
+                rolesList: document.getElementById('roles-list'),
+                historyList: document.getElementById('history-list'),
+                introGameTitle: document.getElementById('intro-game-title'),
+                introGameName: document.getElementById('intro-game-name'),
+                introGameDesc: document.getElementById('intro-game-desc'),
+                introCountdown: document.getElementById('intro-countdown'),
+                arenaGameName: document.getElementById('arena-game-name'),
+                arenaTimer: document.getElementById('arena-timer'),
+                arenaScore: document.getElementById('arena-score-tracking'),
+                arenaSurface: document.getElementById('arena-surface'),
+                resultTitle: document.getElementById('result-status-title'),
+                resultDesc: document.getElementById('result-status-desc'),
+                destinyTitle: document.getElementById('destiny-title'),
+                destinySubtitle: document.getElementById('destiny-subtitle'),
+                roleGrid: document.getElementById('role-selection-grid'),
+                randomizerMachine: document.getElementById('randomizer-machine'),
+                randomizerRoulette: document.getElementById('randomizer-roulette'),
+                resolutionTitle: document.getElementById('resolution-outcome-title'),
+                resolvedCardInner: document.querySelector('#resolved-role-card .card-inner') || document.querySelector('#resolved-role-card'),
+                summaryTableBody: document.getElementById('summary-table-body')
+            }
+        };
+
+        loadSession();
+        setupGlobalEvents();
+        updateUI();
+        routeViewOnStart();
+    }
+
     const FX = {
         shake: () => {
+            if (!DOM.viewport) return;
             DOM.viewport.classList.remove('shake');
             void DOM.viewport.offsetWidth;
             DOM.viewport.classList.add('shake');
             setTimeout(() => DOM.viewport.classList.remove('shake'), 300);
         },
         flash: (type) => {
+            if (!DOM.viewport) return;
             const classFx = type === 'green' ? 'flash-green' : 'flash-red';
             DOM.viewport.classList.remove('flash-green', 'flash-red');
             void DOM.viewport.offsetWidth;
@@ -118,16 +119,6 @@
             setTimeout(() => DOM.viewport.classList.remove(classFx), 250);
         }
     };
-
-    // ---------------------------------------------------------
-    // INITIALIZATION & CACHE
-    // ---------------------------------------------------------
-    function init() {
-        loadSession();
-        setupGlobalEvents();
-        updateUI();
-        routeViewOnStart();
-    }
 
     function saveSession() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
@@ -155,7 +146,9 @@
 
     function switchView(viewKey) {
         Object.keys(DOM.views).forEach(k => {
-            DOM.views[k].classList.toggle('active', k === viewKey);
+            if (DOM.views[k]) {
+                DOM.views[k].classList.toggle('active', k === viewKey);
+            }
         });
     }
 
@@ -164,7 +157,7 @@
         if (remaining.length === 0 && Object.keys(AppState.assignedRoles).length > 0) {
             buildSummaryScreen();
             switchView('summary');
-        } else if (AppState.currentPlayer.name) {
+        } else if (AppState.currentPlayer && AppState.currentPlayer.name) {
             if (AppState.currentPlayer.gamesPlayed >= 3) {
                 setupDestinyAllocationView();
                 switchView('destiny');
@@ -178,35 +171,37 @@
 
     function updateUI() {
         // Build Status tray roles
-        DOM.displays.rolesList.innerHTML = "";
-        DEFINED_ROLES.forEach(role => {
-            const li = document.createElement('li');
-            li.textContent = role;
-            if (AppState.assignedRoles[role]) {
-                li.classList.add('taken');
-                li.textContent += ` (${AppState.assignedRoles[role]})`;
-            }
-            DOM.displays.rolesList.appendChild(li);
-        });
+        if (DOM.displays.rolesList) {
+            DOM.displays.rolesList.innerHTML = "";
+            DEFINED_ROLES.forEach(role => {
+                const li = document.createElement('li');
+                li.textContent = role;
+                if (AppState.assignedRoles[role]) {
+                    li.classList.add('taken');
+                    li.textContent += ` (${AppState.assignedRoles[role]})`;
+                }
+                DOM.displays.rolesList.appendChild(li);
+            });
+        }
 
         // History logs
-        DOM.displays.historyList.innerHTML = "";
-        [...AppState.history].reverse().slice(0, 5).forEach(h => {
-            const el = document.createElement('div');
-            el.className = "history-item";
-            el.innerHTML = `<span>${h.name}</span><span class="glow-text">${h.role}</span>`;
-            DOM.displays.historyList.appendChild(el);
-        });
+        if (DOM.displays.historyList) {
+            DOM.displays.historyList.innerHTML = "";
+            [...AppState.history].reverse().slice(0, 5).forEach(h => {
+                const el = document.createElement('div');
+                el.className = "history-item";
+                el.innerHTML = `<span>${h.name}</span><span class="glow-text">${h.role}</span>`;
+                DOM.displays.historyList.appendChild(el);
+            });
+        }
     }
 
     function getRemainingRoles() {
         return DEFINED_ROLES.filter(r => !AppState.assignedRoles[r]);
     }
 
-    // ---------------------------------------------------------
-    // USER ACTION ROUTINES
-    // ---------------------------------------------------------
     function handleUserRegistration() {
+        if (!DOM.inputs.playerName) return;
         const name = DOM.inputs.playerName.value.trim();
         if (!name) {
             FX.shake();
@@ -224,7 +219,7 @@
             name: name,
             wins: 0,
             gamesPlayed: 0,
-            gamePool: [0, 1, 2].sort(() => 0.5 - Math.random()) // Perfect randomized order
+            gamePool: [0, 1, 2].sort(() => 0.5 - Math.random())
         };
         saveSession();
         beginGameIntroduction();
@@ -235,19 +230,19 @@
         const activeGameId = AppState.currentPlayer.gamePool[AppState.currentPlayer.gamesPlayed];
         const meta = MINI_GAMES.find(g => g.id === activeGameId);
 
-        DOM.displays.introGameTitle.textContent = `ROUND ${AppState.currentPlayer.gamesPlayed + 1}/3`;
-        DOM.displays.introGameName.textContent = meta.name;
-        DOM.displays.introGameDesc.textContent = meta.desc;
+        if (DOM.displays.introGameTitle) DOM.displays.introGameTitle.textContent = `ROUND ${AppState.currentPlayer.gamesPlayed + 1}/3`;
+        if (DOM.displays.introGameName) DOM.displays.introGameName.textContent = meta.name;
+        if (DOM.displays.introGameDesc) DOM.displays.introGameDesc.textContent = meta.desc;
 
         let leftCount = 3;
-        DOM.displays.introCountdown.textContent = leftCount;
+        if (DOM.displays.introCountdown) DOM.displays.introCountdown.textContent = leftCount;
 
         const countdown = setInterval(() => {
             leftCount--;
             if (leftCount > 0) {
-                DOM.displays.introCountdown.textContent = leftCount;
+                if (DOM.displays.introCountdown) DOM.displays.introCountdown.textContent = leftCount;
             } else if (leftCount === 0) {
-                DOM.displays.introCountdown.textContent = "PROVE!";
+                if (DOM.displays.introCountdown) DOM.displays.introCountdown.textContent = "PROVE!";
             } else {
                 clearInterval(countdown);
                 startActiveArena(activeGameId, meta.name);
@@ -257,11 +252,11 @@
 
     function runGlobalCountdown(sec, triggerEnd) {
         GameTimerCountdown = sec;
-        DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
+        if (DOM.displays.arenaTimer) DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
         
         GameLoopInterval = setInterval(() => {
             GameTimerCountdown--;
-            DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
+            if (DOM.displays.arenaTimer) DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
             
             if (GameTimerCountdown <= 3 && GameTimerCountdown > 0) {
                 FX.flash('red');
@@ -275,8 +270,8 @@
 
     function startActiveArena(gameId, name) {
         switchView('gameArena');
-        DOM.displays.arenaGameName.textContent = name;
-        DOM.displays.arenaSurface.innerHTML = "";
+        if (DOM.displays.arenaGameName) DOM.displays.arenaGameName.textContent = name;
+        if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.innerHTML = "";
 
         if (GameLoopInterval) clearInterval(GameLoopInterval);
 
@@ -287,31 +282,33 @@
 
     function concludeGame(isWin, summary) {
         if (GameLoopInterval) clearInterval(GameLoopInterval);
-        DOM.displays.arenaSurface.innerHTML = "";
+        if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.innerHTML = "";
 
         AppState.currentPlayer.gamesPlayed++;
         if (isWin) {
             AppState.currentPlayer.wins++;
-            DOM.displays.resultTitle.textContent = "VICTORY";
-            DOM.displays.resultTitle.className = "glow-text";
+            if (DOM.displays.resultTitle) {
+                DOM.displays.resultTitle.textContent = "VICTORY";
+                DOM.displays.resultTitle.className = "glow-text";
+            }
             FX.flash('green');
         } else {
-            DOM.displays.resultTitle.textContent = "DEFEAT";
-            DOM.displays.resultTitle.className = "";
+            if (DOM.displays.resultTitle) {
+                DOM.displays.resultTitle.textContent = "DEFEAT";
+                DOM.displays.resultTitle.className = "";
+            }
             FX.shake();
             FX.flash('red');
         }
 
-        DOM.displays.resultDesc.textContent = `${summary} (SCORE: ${AppState.currentPlayer.wins}/${AppState.currentPlayer.gamesPlayed})`;
+        if (DOM.displays.resultDesc) DOM.displays.resultDesc.textContent = `${summary} (SCORE: ${AppState.currentPlayer.wins}/${AppState.currentPlayer.gamesPlayed})`;
         saveSession();
         switchView('gameResult');
     }
 
-    // ---------------------------------------------------------
-    // MINIGAME 0: CHRONO TAP (100% NATIVE DOM COMPATIBLE)
-    // ---------------------------------------------------------
+    // GAME 0: CHRONO TAP
     function startChronoTap() {
-        DOM.displays.arenaScore.textContent = "ALIGN THE RINGS!";
+        if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = "ALIGN THE RINGS!";
         
         const centerCore = document.createElement('div');
         centerCore.className = "chrono-target-zone";
@@ -320,29 +317,25 @@
         shrinker.className = "chrono-tracker-ring";
         
         centerCore.appendChild(shrinker);
-        DOM.displays.arenaSurface.appendChild(centerCore);
+        if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(centerCore);
 
-        // Responsive Action Button
         const trigger = document.createElement('button');
         trigger.className = "btn-pixel primary";
         trigger.textContent = "TAP ALIGN!";
         trigger.style.position = "absolute";
         trigger.style.bottom = "20px";
-        DOM.displays.arenaSurface.appendChild(trigger);
+        if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(trigger);
 
         let size = 200;
         const animationLoop = setInterval(() => {
             size -= 4;
-            if (size <= 20) {
-                size = 200;
-            }
+            if (size <= 20) size = 200;
             shrinker.style.width = size + "px";
             shrinker.style.height = size + "px";
         }, 20);
 
         trigger.addEventListener('click', () => {
             clearInterval(animationLoop);
-            // The green ring zone is 80px. If size matches close enough, win.
             if (size >= 70 && size <= 95) {
                 concludeGame(true, "PERFECT CHRONO HARMONY!");
             } else {
@@ -356,11 +349,9 @@
         });
     }
 
-    // ---------------------------------------------------------
-    // MINIGAME 1: NEON MATRIX
-    // ---------------------------------------------------------
+    // GAME 1: NEON MATRIX
     function startNeonMatrix() {
-        DOM.displays.arenaScore.textContent = "REPLAY NEON ECHO...";
+        if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = "REPLAY NEON ECHO...";
 
         const grid = document.createElement('div');
         grid.className = "matrix-grid";
@@ -373,23 +364,24 @@
             grid.appendChild(cell);
             cells.push(cell);
         }
-        DOM.displays.arenaSurface.appendChild(grid);
+        if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(grid);
 
         const seq = Array.from({ length: 4 }, () => Math.floor(Math.random() * 9));
         GameRuntimeData = { steps: 0, activeInput: false };
 
-        // Play pattern
         let flashStep = 0;
         const runFlashes = setInterval(() => {
             if (flashStep < seq.length) {
                 const target = cells[seq[flashStep]];
-                target.classList.add('flash');
-                setTimeout(() => target.classList.remove('flash'), 350);
+                if (target) {
+                    target.classList.add('flash');
+                    setTimeout(() => target.classList.remove('flash'), 350);
+                }
                 flashStep++;
             } else {
                 clearInterval(runFlashes);
                 GameRuntimeData.activeInput = true;
-                DOM.displays.arenaScore.textContent = "YOUR ECHO TURN!";
+                if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = "YOUR ECHO TURN!";
             }
         }, 700);
 
@@ -402,7 +394,7 @@
 
                 if (idx === seq[GameRuntimeData.steps]) {
                     GameRuntimeData.steps++;
-                    DOM.displays.arenaScore.textContent = `MATCHED: ${GameRuntimeData.steps}/4`;
+                    if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = `MATCHED: ${GameRuntimeData.steps}/4`;
                     FX.flash('green');
                     
                     if (GameRuntimeData.steps === 4) {
@@ -419,16 +411,13 @@
         });
     }
 
-    // ---------------------------------------------------------
-    // MINIGAME 2: CYBER POP
-    // ---------------------------------------------------------
+    // GAME 2: CYBER POP
     function startCyberPop() {
         const countRequired = 10;
         GameRuntimeData = { popped: 0 };
-        DOM.displays.arenaScore.textContent = `POPS: 0/${countRequired}`;
+        if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = `POPS: 0/${countRequired}`;
 
-        const surfaceW = DOM.displays.arenaSurface.offsetWidth || 300;
-        const surfaceH = DOM.displays.arenaSurface.offsetHeight || 320;
+        const surfaceW = DOM.displays.arenaSurface ? DOM.displays.arenaSurface.offsetWidth : 300;
 
         function spawn() {
             if (GameRuntimeData.popped >= countRequired || GameTimerCountdown <= 0) return;
@@ -458,7 +447,7 @@
                 clearInterval(flight);
                 b.remove();
                 GameRuntimeData.popped++;
-                DOM.displays.arenaScore.textContent = `POPS: ${GameRuntimeData.popped}/${countRequired}`;
+                if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = `POPS: ${GameRuntimeData.popped}/${countRequired}`;
                 FX.flash('green');
 
                 if (GameRuntimeData.popped >= countRequired) {
@@ -468,7 +457,7 @@
                 }
             });
 
-            DOM.displays.arenaSurface.appendChild(b);
+            if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(b);
         }
 
         spawn();
@@ -479,9 +468,6 @@
         });
     }
 
-    // ---------------------------------------------------------
-    // ALLOCATION FLOW & DESTINY ROULETTE
-    // ---------------------------------------------------------
     function setupDestinyAllocationView() {
         const remaining = getRemainingRoles();
         if (remaining.length === 0) {
@@ -491,37 +477,39 @@
         }
 
         if (AppState.currentPlayer.wins >= 2) {
-            DOM.displays.destinyTitle.textContent = "VAULT ACQUIRED";
-            DOM.displays.destinySubtitle.textContent = "SELECT THE ROLE YOU DESIRE:";
-            DOM.displays.roleGrid.classList.remove('hidden');
-            DOM.displays.randomizerMachine.classList.add('hidden');
+            if (DOM.displays.destinyTitle) DOM.displays.destinyTitle.textContent = "VAULT ACQUIRED";
+            if (DOM.displays.destinySubtitle) DOM.displays.destinySubtitle.textContent = "SELECT THE ROLE YOU DESIRE:";
+            if (DOM.displays.roleGrid) DOM.displays.roleGrid.classList.remove('hidden');
+            if (DOM.displays.randomizerMachine) DOM.displays.randomizerMachine.classList.add('hidden');
             
-            DOM.displays.roleGrid.innerHTML = "";
-            remaining.forEach(role => {
-                const card = document.createElement('div');
-                card.className = "role-card";
-                card.textContent = role;
-                card.addEventListener('click', () => saveAssignedRole(role));
-                DOM.displays.roleGrid.appendChild(card);
-            });
+            if (DOM.displays.roleGrid) {
+                DOM.displays.roleGrid.innerHTML = "";
+                remaining.forEach(role => {
+                    const card = document.createElement('div');
+                    card.className = "role-card";
+                    card.textContent = role;
+                    card.addEventListener('click', () => saveAssignedRole(role));
+                    DOM.displays.roleGrid.appendChild(card);
+                });
+            }
         } else {
-            DOM.displays.destinyTitle.textContent = "VAULT SEALED";
-            DOM.displays.destinySubtitle.textContent = "RANDOM PROCESS REQUIRED:";
-            DOM.displays.roleGrid.classList.add('hidden');
-            DOM.displays.randomizerMachine.classList.remove('hidden');
-            DOM.displays.randomizerRoulette.textContent = "???";
-            DOM.buttons.triggerRoulette.classList.remove('disabled');
+            if (DOM.displays.destinyTitle) DOM.displays.destinyTitle.textContent = "VAULT SEALED";
+            if (DOM.displays.destinySubtitle) DOM.displays.destinySubtitle.textContent = "RANDOM PROCESS REQUIRED:";
+            if (DOM.displays.roleGrid) DOM.displays.roleGrid.classList.add('hidden');
+            if (DOM.displays.randomizerMachine) DOM.displays.randomizerMachine.classList.remove('hidden');
+            if (DOM.displays.randomizerRoulette) DOM.displays.randomizerRoulette.textContent = "???";
+            if (DOM.buttons.triggerRoulette) DOM.buttons.triggerRoulette.classList.remove('disabled');
         }
     }
 
     function runDestinyRoulette() {
-        DOM.buttons.triggerRoulette.classList.add('disabled');
+        if (DOM.buttons.triggerRoulette) DOM.buttons.triggerRoulette.classList.add('disabled');
         const remaining = getRemainingRoles();
         let counts = 0;
         
         const tick = setInterval(() => {
             const tempRole = remaining[Math.floor(Math.random() * remaining.length)];
-            DOM.displays.randomizerRoulette.textContent = tempRole.toUpperCase();
+            if (DOM.displays.randomizerRoulette) DOM.displays.randomizerRoulette.textContent = tempRole.toUpperCase();
             counts++;
 
             if (counts >= 12) {
@@ -537,17 +525,17 @@
         AppState.assignedRoles[finalRole] = pName;
         AppState.history.push({ name: pName, role: finalRole });
 
-        // Reset turn state
         AppState.currentPlayer = { name: "", wins: 0, gamesPlayed: 0, gamePool: [] };
         saveSession();
         updateUI();
 
-        DOM.displays.resolutionTitle.textContent = `${pName.toUpperCase()}'s DESIGNATION`;
-        DOM.displays.resolvedCardInner.textContent = finalRole.toUpperCase();
+        if (DOM.displays.resolutionTitle) DOM.displays.resolutionTitle.textContent = `${pName.toUpperCase()}'s DESIGNATION`;
+        if (DOM.displays.resolvedCardInner) DOM.displays.resolvedCardInner.textContent = finalRole.toUpperCase();
         switchView('resolution');
     }
 
     function buildSummaryScreen() {
+        if (!DOM.displays.summaryTableBody) return;
         DOM.displays.summaryTableBody.innerHTML = "";
         DEFINED_ROLES.forEach(r => {
             const tr = document.createElement('tr');
@@ -566,48 +554,52 @@
         if (confirm("THIS ACTION CANNOT BE UNDONE. RESET CURRENT TRIAL DATABASE?")) {
             resetEngine();
             updateUI();
-            DOM.inputs.playerName.value = "";
+            if (DOM.inputs.playerName) DOM.inputs.playerName.value = "";
             switchView('inputName');
         }
     }
 
-    // ---------------------------------------------------------
-    // SIDEBAR TRAY TOGGLE
-    // ---------------------------------------------------------
     function toggleStatusTray(isOpen) {
-        DOM.displays.statusTray.classList.toggle('active', isOpen);
+        if (DOM.displays.statusTray) {
+            DOM.displays.statusTray.classList.toggle('active', isOpen);
+        }
     }
 
-    // ---------------------------------------------------------
-    // GLOBAL HANDLERS
-    // ---------------------------------------------------------
     function setupGlobalEvents() {
-        DOM.buttons.startJourney.addEventListener('click', handleUserRegistration);
-        DOM.buttons.continueJourney.addEventListener('click', () => {
-            if (AppState.currentPlayer.gamesPlayed >= 3) {
-                setupDestinyAllocationView();
-                switchView('destiny');
-            } else {
-                beginGameIntroduction();
-            }
-        });
-        DOM.buttons.triggerRoulette.addEventListener('click', runDestinyRoulette);
-        DOM.buttons.finishTurn.addEventListener('click', () => {
-            if (getRemainingRoles().length === 0) {
-                buildSummaryScreen();
-                switchView('summary');
-            } else {
-                DOM.inputs.playerName.value = "";
-                switchView('inputName');
-            }
-        });
-        DOM.buttons.restartFull.addEventListener('click', handleHardSystemReset);
-        DOM.buttons.resetSession.addEventListener('click', handleHardSystemReset);
+        if (DOM.buttons.startJourney) DOM.buttons.startJourney.addEventListener('click', handleUserRegistration);
+        if (DOM.buttons.continueJourney) {
+            DOM.buttons.continueJourney.addEventListener('click', () => {
+                if (AppState.currentPlayer.gamesPlayed >= 3) {
+                    setupDestinyAllocationView();
+                    switchView('destiny');
+                } else {
+                    beginGameIntroduction();
+                }
+            });
+        }
+        if (DOM.buttons.triggerRoulette) DOM.buttons.triggerRoulette.addEventListener('click', runDestinyRoulette);
+        if (DOM.buttons.finishTurn) {
+            DOM.buttons.finishTurn.addEventListener('click', () => {
+                if (getRemainingRoles().length === 0) {
+                    buildSummaryScreen();
+                    switchView('summary');
+                } else {
+                    if (DOM.inputs.playerName) DOM.inputs.playerName.value = "";
+                    switchView('inputName');
+                }
+            });
+        }
+        if (DOM.buttons.restartFull) DOM.buttons.restartFull.addEventListener('click', handleHardSystemReset);
+        if (DOM.buttons.resetSession) DOM.buttons.resetSession.addEventListener('click', handleHardSystemReset);
 
-        // Drawer Event mapping
-        DOM.buttons.toggleTray.addEventListener('click', () => toggleStatusTray(true));
-        DOM.buttons.closeTray.addEventListener('click', () => toggleStatusTray(false));
+        if (DOM.buttons.toggleTray) DOM.buttons.toggleTray.addEventListener('click', () => toggleStatusTray(true));
+        if (DOM.buttons.closeTray) DOM.buttons.closeTray.addEventListener('click', () => toggleStatusTray(false));
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    // Bootloader ensuring document is parsed cleanly
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
 }());
