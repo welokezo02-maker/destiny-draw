@@ -1,451 +1,80 @@
 /* ==========================================================================
-   style.css - DESTINY DRAW ARCHITECTURE ENGINE (MILESTONE 5 VISUAL SUITE)
+   HIGH-PRIORITY MOBILE BREAKPOINT CRITICAL RE-LAYOUT
    ========================================================================== */
+@media screen and (max-width: 768px) {
+    /* Force the wrapper body to center everything vertically and take full width */
+    html, body {
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        overflow-x: hidden !important;
+    }
 
-:root {
-    --bg-color: #0b0c10;
-    --panel-bg: #1f2833;
-    --panel-border: #45a29e;
-    --panel-border-light: #66fcf1;
-    --text-main: #c5c6c7;
-    --text-highlight: #ffffff;
-    --accent-yellow: #ffea00;
-    --accent-red: #d90429;
-    --accent-cyan: #00b4d8;
-    --accent-green: #38b000;
-    --font-arcade: 'Courier New', Courier, monospace;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    user-select: none;
-}
-
-body {
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    font-family: var(--font-arcade);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow-x: hidden;
-    position: relative;
-}
-
-/* --- CRT SCANLINE OVERLAY --- */
-body::after {
-    content: " ";
-    display: block;
-    position: absolute;
-    top: 0; left: 0; bottom: 0; right: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    z-index: 999;
-    background-size: 100% 4px, 6px 100%;
-    pointer-events: none;
-}
-
-/* --- MAIN LAYOUT GRID --- */
-#app-container {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    width: 95vw;
-    max-width: 1200px;
-    height: 90vh;
-    background: var(--panel-bg);
-    border: 4px solid var(--panel-border);
-    box-shadow: 0 0 20px rgba(102, 252, 241, 0.2);
-    position: relative;
-    z-index: 1;
-}
-
-/* --- SIDEBAR CONFIGURATION --- */
-aside#sidebar {
-    background: rgba(11, 12, 16, 0.8);
-    border-right: 4px solid var(--panel-border);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow-y: auto;
-}
-
-aside h2 {
-    color: var(--panel-border-light);
-    font-size: 1.2rem;
-    text-shadow: 0 0 8px var(--panel-border-light);
-    border-bottom: 2px dashed var(--panel-border);
-    padding-bottom: 8px;
-}
-
-ul#roles-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-ul#roles-list li {
-    padding: 6px 10px;
-    background: #141b4d;
-    border: 1px solid var(--panel-border);
-    color: var(--text-highlight);
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-ul#roles-list li.taken {
-    background: #0d1117;
-    color: #58a6ff;
-    border-color: #30363d;
-    text-decoration: line-through;
-    opacity: 0.7;
-}
-
-#history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.history-item {
-    font-size: 0.8rem;
-    padding: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border-left: 3px solid var(--panel-border-light);
-    display: flex;
-    justify-content: space-between;
-}
-
-/* --- VIEW ROUTING & TRANSITIONS --- */
-main#main-stage {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 30px;
-    overflow: hidden;
-}
-
-.view {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    width: 100%;
-    max-width: 600px;
-    opacity: 0;
-    transform: translateY(15px) scale(0.98);
-    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.view.active {
-    display: flex;
-    opacity: 1;
-    transform: translateY(0) scale(1);
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* --- TYPOGRAPHY & GLOWS --- */
-h1 {
-    font-size: 2.2rem;
-    color: var(--text-highlight);
-    margin-bottom: 15px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-p {
-    font-size: 1.1rem;
-    margin-bottom: 25px;
-    line-height: 1.5;
-}
-
-.glow-yellow {
-    color: var(--accent-yellow);
-    text-shadow: 0 0 10px rgba(255, 234, 0, 0.6);
-}
-
-.glow-blue {
-    color: var(--accent-cyan);
-    text-shadow: 0 0 10px rgba(0, 180, 216, 0.6);
-}
-
-/* --- PIXEL BUTTON MECHANICS --- */
-.btn-pixel {
-    background: var(--panel-border);
-    color: var(--bg-color);
-    font-family: var(--font-arcade);
-    font-size: 1.1rem;
-    font-weight: bold;
-    padding: 12px 24px;
-    border: none;
-    cursor: pointer;
-    text-transform: uppercase;
-    box-shadow: 4px 4px 0px #000;
-    transition: transform 0.1s, box-shadow 0.1s, background-color 0.2s;
-    outline: none;
-}
-
-.btn-pixel:hover {
-    background: var(--panel-border-light);
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px #000;
-}
-
-.btn-pixel:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px #000;
-}
-
-.btn-pixel.red {
-    background: var(--accent-red);
-    color: #fff;
-}
-
-.btn-pixel.red:hover {
-    background: #ff1a40;
-}
-
-.btn-pixel.small {
-    padding: 6px 12px;
-    font-size: 0.9rem;
-    box-shadow: 2px 2px 0px #000;
-}
-
-.btn-pixel.disabled, .btn-pixel:disabled {
-    background: #555 !important;
-    color: #888 !important;
-    cursor: not-allowed;
-    box-shadow: none !important;
-    transform: none !important;
-}
-
-/* --- INPUT FIELDS --- */
-input[type="text"] {
-    background: #0b0c10;
-    border: 3px solid var(--panel-border);
-    color: var(--panel-border-light);
-    font-family: var(--font-arcade);
-    font-size: 1.2rem;
-    padding: 12px;
-    width: 80%;
-    margin-bottom: 20px;
-    text-align: center;
-    outline: none;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
-}
-
-input[type="text"]:focus {
-    border-color: var(--panel-border-light);
-    box-shadow: 0 0 15px rgba(102, 252, 241, 0.4);
-}
-
-/* --- ARCADE ARENA COMPONENTS --- */
-#arena-canvas-container {
-    width: 100%;
-    min-height: 220px;
-    background: #050608;
-    border: 3px dashed var(--panel-border);
-    margin: 15px 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 15px;
-    position: relative;
-    overflow: hidden;
-}
-
-#arena-timer {
-    font-size: 1.5rem;
-    color: var(--accent-red);
-    font-weight: bold;
-    animation: pulse-glow 1s infinite alternate;
-}
-
-#intro-countdown {
-    font-size: 4rem;
-    color: var(--accent-yellow);
-    margin: 20px 0;
-    text-shadow: 4px 4px 0px #000;
-    animation: float-bounce 0.5s infinite alternate;
-}
-
-/* --- 3D CARD DRAW & DESTINY VAULT --- */
-#role-selection-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    gap: 15px;
-    width: 100%;
-    margin-top: 20px;
-    perspective: 1000px;
-}
-
-.role-card {
-    background: linear-gradient(135deg, #141b4d, #1f2833);
-    border: 2px solid var(--panel-border);
-    padding: 20px 10px;
-    color: var(--text-highlight);
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, box-shadow 0.3s;
-    transform-style: preserve-3d;
-}
-
-.role-card:hover {
-    border-color: var(--accent-yellow);
-    transform: translateY(-8px) rotateX(10deg);
-    box-shadow: 0 10px 20px rgba(255, 234, 0, 0.3);
-}
-
-#randomizer-machine {
-    margin: 30px 0;
-    padding: 30px;
-    background: #050608;
-    border: 3px solid var(--accent-cyan);
-    border-radius: 8px;
-    width: 80%;
-    box-shadow: inset 0 0 20px rgba(0, 180, 216, 0.3);
-}
-
-#randomizer-roulette {
-    font-size: 2rem;
-    color: var(--accent-yellow);
-    letter-spacing: 3px;
-    margin-bottom: 20px;
-}
-
-#resolved-role-card {
-    width: 220px;
-    height: 300px;
-    background: linear-gradient(135deg, #ffea00, #ff8800);
-    border: 6px solid #fff;
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 20px auto;
-    box-shadow: 0 0 30px rgba(255, 234, 0, 0.6), inset 0 0 15px rgba(0,0,0,0.3);
-    animation: card-reveal-spin 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-#resolved-role-card .card-inner {
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: #0b0c10;
-    text-align: center;
-    padding: 10px;
-    text-shadow: 1px 1px 0px rgba(255,255,255,0.4);
-}
-
-/* --- SUMMARY TABLE --- */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: #0b0c10;
-    border: 2px solid var(--panel-border);
-}
-
-th, td {
-    padding: 12px;
-    border: 1px solid var(--panel-border);
-    text-align: left;
-}
-
-th {
-    background: #141b4d;
-    color: var(--panel-border-light);
-}
-
-/* --- KEYFRAME ANIMATIONS & FX CLASSES --- */
-@keyframes pulse-glow {
-    0% { opacity: 0.8; text-shadow: 0 0 4px currentColor; }
-    100% { opacity: 1; text-shadow: 0 0 15px currentColor; }
-}
-
-@keyframes float-bounce {
-    0% { transform: translateY(0px) scale(1); }
-    100% { transform: translateY(-8px) scale(1.05); }
-}
-
-@keyframes card-reveal-spin {
-    0% { transform: scale(0.2) rotateY(180deg) translateY(50px); opacity: 0; }
-    100% { transform: scale(1) rotateY(0deg) translateY(0px); opacity: 1; }
-}
-
-@keyframes screen-shake-anim {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    20% { transform: translate(-6px, 6px) rotate(-1deg); }
-    40% { transform: translate(-6px, -6px) rotate(1deg); }
-    60% { transform: translate(6px, 6px) rotate(-1deg); }
-    80% { transform: translate(6px, -6px) rotate(1deg); }
-}
-
-.shake {
-    animation: screen-shake-anim 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
-}
-
-.flash-red {
-    background-color: rgba(217, 4, 41, 0.4) !important;
-    transition: background-color 0.1s !important;
-}
-
-.flash-green {
-    background-color: rgba(56, 176, 0, 0.4) !important;
-    transition: background-color 0.1s !important;
-}
-
-/* --- FOOTER & CONTROLS --- */
-footer {
-    position: absolute;
-    bottom: 10px;
-    right: 15px;
-    z-index: 10;
-}
-/* ==========================================================================
-   RESPONSIVE MOBILE OVERRIDES 
-   ========================================================================== */
-@media (max-width: 768px) {
+    /* Force the main container to break away from layout grids and center itself */
     #app-container {
-        grid-template-columns: 1fr; /* Stack sidebar and stage vertically */
-        grid-template-rows: auto 1fr;
-        height: auto;
-        min-height: 100vh;
-        width: 100vw;
-        border: none;
-        box-shadow: none;
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin: 0 auto !important; /* Forces centering */
+        left: 0 !important;
+        right: 0 !important;
+        position: relative !important;
+        border: none !important;
+        box-shadow: none !important;
+        transform: none !important;
     }
 
+    /* Stack the sidebar at the top, cleanly centered */
     aside#sidebar {
-        border-right: none;
-        border-bottom: 4px solid var(--panel-border);
-        padding: 15px;
-        max-height: 250px; /* Keep sidebar compact on mobile scroll */
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        border-right: none !important;
+        border-bottom: 3px solid var(--panel-border) !important;
+        padding: 15px !important;
+        max-height: 240px !important;
+        overflow-y: auto !important;
+        margin: 0 !important;
     }
 
+    /* Force the main game stage to occupy the entire lower half */
     main#main-stage {
-        padding: 15px;
-        min-height: 500px;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 20px 15px !important;
+        min-height: 500px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important; /* Centers the game screen elements */
+        justify-content: flex-start !important;
     }
 
-    h1 {
-        font-size: 1.6rem;
+    /* Center games inside the canvas container */
+    #arena-canvas-container {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0 auto !important;
     }
 
-    input[type="text"] {
-        width: 100%;
+    .btn-pixel {
+        padding: 14px 10px !important;
+        font-size: 14px !important;
     }
 
     #role-selection-grid {
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        width: 100% !important;
     }
 }
