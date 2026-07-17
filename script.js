@@ -1,12 +1,12 @@
 /* ==========================================================================
-   script.js - DESTINY DRAW ARCHITECTURE ENGINE (UNIVERSAL MOBILE COMPATIBLE)
+   script.js - DESTINY DRAW MOBILE-FIRST NATIVE ENGINE
    ========================================================================== */
 
 (function () {
     'use strict';
 
     // ---------------------------------------------------------
-    // SYSTEM CONFIGURATION & CONSTANTS
+    // DEFINED ROLES FOR THE POOL
     // ---------------------------------------------------------
     const DEFINED_ROLES = [
         "Leader",
@@ -22,32 +22,24 @@
         "Worship Assistant"
     ];
 
-    const STORAGE_KEYS = {
-        STATE: "destiny_draw_state_v1"
-    };
+    const STORAGE_KEY = "destiny_draw_mobile_v1";
 
-    const MINI_GAMES_REGISTRY = [
-        { id: 0, name: "MEMORY TILES", desc: "FLIP & MATCH THE PIXEL TILES!" },
-        { id: 1, name: "FAST CLICK", desc: "SMASH THE BUTTON BEFORE TIME RUNS OUT!" },
-        { id: 2, name: "NUMBER RUSH", desc: "CLICK NUMBERS IN ASCENDING ORDER!" },
-        { id: 3, name: "PIXEL DODGE", desc: "DODGE THE INCOMING METEOR TILES!" },
-        { id: 4, name: "TREASURE CHEST", desc: "GUESS WHICH CHEST HOLDS THE GOLD!" },
-        { id: 5, name: "SIMON SAYS", desc: "REPEAT THE FLASHING COLOR PATTERN!" },
-        { id: 6, name: "PIXEL ATTACK", desc: "DEFEND AGAINST THE FALLING BLOCKS!" },
-        { id: 7, name: "MAZE ESCAPE", desc: "NAVIGATE THE PIXEL AVATAR TO THE EXIT!" }
+    const MINI_GAMES = [
+        { id: 0, name: "CHRONO TAP", desc: "TAP AT THE INSTANT THE RED CIRCLE MATCHES THE OUTER TARGET ZONE!" },
+        { id: 1, name: "NEON MATRIX", desc: "WATCH AND REPEAT THE FLASHING COLOR GRID SEQUENCE!" },
+        { id: 2, name: "CYBER POP", desc: "TAP EVERY BUBBLE TO POP IT BEFORE TIME RUNS OUT!" }
     ];
 
     // ---------------------------------------------------------
-    // CORE APPLICATION STATE MATRIX
+    // STATE ENGINE
     // ---------------------------------------------------------
     let AppState = {
-        assignedRoles: {}, 
-        history: [],       
+        assignedRoles: {},
+        history: [],
         currentPlayer: {
             name: "",
             wins: 0,
             gamesPlayed: 0,
-            currentGameIndex: 0,
             gamePool: []
         }
     };
@@ -57,10 +49,10 @@
     let GameRuntimeData = {};
 
     // ---------------------------------------------------------
-    // DOM CACHE REGISTRY
+    // DOM MAP
     // ---------------------------------------------------------
     const DOM = {
-        appContainer: document.getElementById('app-container'),
+        viewport: document.getElementById('app-viewport'),
         views: {
             inputName: document.getElementById('view-input-name'),
             gameIntro: document.getElementById('view-game-intro'),
@@ -75,24 +67,26 @@
         },
         buttons: {
             startJourney: document.getElementById('btn-start-journey'),
-            skipIntro: document.getElementById('btn-skip-intro'),
             continueJourney: document.getElementById('btn-continue-journey'),
             triggerRoulette: document.getElementById('btn-trigger-roulette'),
             finishTurn: document.getElementById('btn-finish-turn'),
             restartFull: document.getElementById('btn-restart-full'),
-            fullscreen: document.getElementById('btn-fullscreen'),
-            resetSession: document.getElementById('btn-reset-session')
+            resetSession: document.getElementById('btn-reset-session'),
+            toggleTray: document.getElementById('btn-toggle-tray'),
+            closeTray: document.getElementById('btn-close-tray')
         },
         displays: {
+            statusTray: document.getElementById('status-tray'),
             rolesList: document.getElementById('roles-list'),
             historyList: document.getElementById('history-list'),
             introGameTitle: document.getElementById('intro-game-title'),
+            introGameName: document.getElementById('intro-game-name'),
             introGameDesc: document.getElementById('intro-game-desc'),
             introCountdown: document.getElementById('intro-countdown'),
             arenaGameName: document.getElementById('arena-game-name'),
             arenaTimer: document.getElementById('arena-timer'),
-            arenaCanvas: document.getElementById('arena-canvas-container'),
             arenaScore: document.getElementById('arena-score-tracking'),
+            arenaSurface: document.getElementById('arena-surface'),
             resultTitle: document.getElementById('result-status-title'),
             resultDesc: document.getElementById('result-status-desc'),
             destinyTitle: document.getElementById('destiny-title'),
@@ -107,104 +101,83 @@
     };
 
     // ---------------------------------------------------------
-    // VISUAL FX CONTROLLER ENGINE
+    // SYSTEM FEEDBACK / FX
     // ---------------------------------------------------------
     const FX = {
-        shake: function(targetElement = DOM.appContainer) {
-            targetElement.classList.remove('shake');
-            void targetElement.offsetWidth; 
-            targetElement.classList.add('shake');
-            setTimeout(() => targetElement.classList.remove('shake'), 300);
+        shake: () => {
+            DOM.viewport.classList.remove('shake');
+            void DOM.viewport.offsetWidth;
+            DOM.viewport.classList.add('shake');
+            setTimeout(() => DOM.viewport.classList.remove('shake'), 300);
         },
-        flash: function(type = 'red', targetElement = DOM.displays.arenaCanvas) {
-            const className = type === 'red' ? 'flash-red' : 'flash-green';
-            targetElement.classList.add(className);
-            setTimeout(() => targetElement.classList.remove(className), 250);
+        flash: (type) => {
+            const classFx = type === 'green' ? 'flash-green' : 'flash-red';
+            DOM.viewport.classList.remove('flash-green', 'flash-red');
+            void DOM.viewport.offsetWidth;
+            DOM.viewport.classList.add(classFx);
+            setTimeout(() => DOM.viewport.classList.remove(classFx), 250);
         }
     };
 
     // ---------------------------------------------------------
-    // INITIALIZATION & PERSISTENCE LAYER
+    // INITIALIZATION & CACHE
     // ---------------------------------------------------------
     function init() {
-        loadSessionData();
-        setupGlobalEventListeners();
-        renderSidebar();
-        evaluateInitialViewRouting();
+        loadSession();
+        setupGlobalEvents();
+        updateUI();
+        routeViewOnStart();
     }
 
-    function saveSessionData() {
-        try {
-            localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(AppState));
-        } catch (e) {
-            console.error("Storage system sync failure:", e);
-        }
+    function saveSession() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
     }
 
-    function loadSessionData() {
-        const stored = localStorage.getItem(STORAGE_KEYS.STATE);
+    function loadSession() {
+        const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             try {
-                const parsed = JSON.parse(stored);
-                if (parsed && typeof parsed === 'object') {
-                    AppState.assignedRoles = parsed.assignedRoles || {};
-                    AppState.history = parsed.history || [];
-                    AppState.currentPlayer = parsed.currentPlayer || {
-                        name: "", wins: 0, gamesPlayed: 0, currentGameIndex: 0, gamePool: []
-                    };
-                }
+                AppState = JSON.parse(stored);
             } catch (e) {
-                console.warn("Corrupted session layout detected. Refreshing matrices.");
-                resetToDefaultState();
+                resetEngine();
             }
-        } else {
-            resetToDefaultState();
         }
     }
 
-    function resetToDefaultState() {
-        AppState.assignedRoles = {};
-        AppState.history = [];
-        AppState.currentPlayer = {
-            name: "", wins: 0, gamesPlayed: 0, currentGameIndex: 0, gamePool: []
+    function resetEngine() {
+        AppState = {
+            assignedRoles: {},
+            history: [],
+            currentPlayer: { name: "", wins: 0, gamesPlayed: 0, gamePool: [] }
         };
-        saveSessionData();
+        saveSession();
     }
 
-    // ---------------------------------------------------------
-    // VIEW ROUTING ENGINE
-    // ---------------------------------------------------------
-    function switchView(targetViewKey) {
-        Object.keys(DOM.views).forEach(key => {
-            if (key === targetViewKey) {
-                DOM.views[key].classList.add('active');
-            } else {
-                DOM.views[key].classList.remove('active');
-            }
+    function switchView(viewKey) {
+        Object.keys(DOM.views).forEach(k => {
+            DOM.views[k].classList.toggle('active', k === viewKey);
         });
     }
 
-    function evaluateInitialViewRouting() {
+    function routeViewOnStart() {
         const remaining = getRemainingRoles();
         if (remaining.length === 0 && Object.keys(AppState.assignedRoles).length > 0) {
-            renderSummaryView();
+            buildSummaryScreen();
             switchView('summary');
         } else if (AppState.currentPlayer.name) {
             if (AppState.currentPlayer.gamesPlayed >= 3) {
-                renderDestinyProcessingView();
+                setupDestinyAllocationView();
                 switchView('destiny');
             } else {
-                executeGameIntroLoop();
+                beginGameIntroduction();
             }
         } else {
             switchView('inputName');
         }
     }
 
-    // ---------------------------------------------------------
-    // SIDEBAR & DATA INTERFACE RENDERING
-    // ---------------------------------------------------------
-    function renderSidebar() {
+    function updateUI() {
+        // Build Status tray roles
         DOM.displays.rolesList.innerHTML = "";
         DEFINED_ROLES.forEach(role => {
             const li = document.createElement('li');
@@ -216,737 +189,324 @@
             DOM.displays.rolesList.appendChild(li);
         });
 
+        // History logs
         DOM.displays.historyList.innerHTML = "";
-        const visualLogs = [...AppState.history].reverse().slice(0, 5);
-        visualLogs.forEach(item => {
+        [...AppState.history].reverse().slice(0, 5).forEach(h => {
             const el = document.createElement('div');
             el.className = "history-item";
-            el.innerHTML = `<span>${escapeHTML(item.name)}</span><span class="glow-yellow">${escapeHTML(item.role)}</span>`;
+            el.innerHTML = `<span>${h.name}</span><span class="glow-text">${h.role}</span>`;
             DOM.displays.historyList.appendChild(el);
         });
     }
 
     function getRemainingRoles() {
-        return DEFINED_ROLES.filter(role => !AppState.assignedRoles[role]);
+        return DEFINED_ROLES.filter(r => !AppState.assignedRoles[r]);
     }
 
     // ---------------------------------------------------------
-    // CONTROLLER LOGIC: PLAYER STEPS
+    // USER ACTION ROUTINES
     // ---------------------------------------------------------
-    function handlePlayerRegistration() {
-        const rawName = DOM.inputs.playerName.value.trim();
-        if (!rawName) {
+    function handleUserRegistration() {
+        const name = DOM.inputs.playerName.value.trim();
+        if (!name) {
             FX.shake();
-            alert("IDENTIFICATION ERROR: Please enter a valid name.");
             return;
         }
 
-        const remaining = getRemainingRoles();
-        if (remaining.length === 0) {
-            alert("VAULT LOCKED: No remaining roles available for assignment.");
-            renderSummaryView();
+        if (getRemainingRoles().length === 0) {
+            alert("ALL CONSTRAINTS RESOLVED.");
+            buildSummaryScreen();
             switchView('summary');
             return;
         }
 
-        AppState.currentPlayer.name = rawName;
-        AppState.currentPlayer.wins = 0;
-        AppState.currentPlayer.gamesPlayed = 0;
-        AppState.currentPlayer.currentGameIndex = 0;
-        AppState.currentPlayer.gamePool = generateRandomizedGamePool(3);
-
-        saveSessionData();
-        executeGameIntroLoop();
+        AppState.currentPlayer = {
+            name: name,
+            wins: 0,
+            gamesPlayed: 0,
+            gamePool: [0, 1, 2].sort(() => 0.5 - Math.random()) // Perfect randomized order
+        };
+        saveSession();
+        beginGameIntroduction();
     }
 
-    function generateRandomizedGamePool(count) {
-        const gameIdentifiers = [0, 1, 2, 3, 4, 5, 6, 7];
-        const shuffled = gameIdentifiers.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, count);
-    }
-
-    function executeGameIntroLoop() {
+    function beginGameIntroduction() {
         switchView('gameIntro');
-        const currentRound = AppState.currentPlayer.gamesPlayed + 1;
-        const assignedGameID = AppState.currentPlayer.gamePool[AppState.currentPlayer.gamesPlayed];
-        const gameMeta = MINI_GAMES_REGISTRY.find(g => g.id === assignedGameID) || MINI_GAMES_REGISTRY[0];
+        const activeGameId = AppState.currentPlayer.gamePool[AppState.currentPlayer.gamesPlayed];
+        const meta = MINI_GAMES.find(g => g.id === activeGameId);
 
-        DOM.displays.introGameTitle.textContent = `GAME ${currentRound}/3`;
-        DOM.displays.introGameDesc.textContent = gameMeta.name + ": " + gameMeta.desc;
-        
-        let counter = 3;
-        DOM.displays.introCountdown.textContent = counter;
+        DOM.displays.introGameTitle.textContent = `ROUND ${AppState.currentPlayer.gamesPlayed + 1}/3`;
+        DOM.displays.introGameName.textContent = meta.name;
+        DOM.displays.introGameDesc.textContent = meta.desc;
 
-        const interval = setInterval(() => {
-            counter--;
-            if (counter > 0) {
-                DOM.displays.introCountdown.textContent = counter;
-            } else if (counter === 0) {
-                DOM.displays.introCountdown.textContent = "START!";
-                FX.flash('green');
+        let leftCount = 3;
+        DOM.displays.introCountdown.textContent = leftCount;
+
+        const countdown = setInterval(() => {
+            leftCount--;
+            if (leftCount > 0) {
+                DOM.displays.introCountdown.textContent = leftCount;
+            } else if (leftCount === 0) {
+                DOM.displays.introCountdown.textContent = "PROVE!";
             } else {
-                clearInterval(interval);
-                launchArenaCore(assignedGameID, gameMeta.name);
+                clearInterval(countdown);
+                startActiveArena(activeGameId, meta.name);
             }
-        }, 1000);
+        }, 800);
     }
 
-    // ---------------------------------------------------------
-    // CORE MINI-GAMES INTERLOCK STAGE
-    // ---------------------------------------------------------
-    function launchArenaCore(gameID, gameName) {
-        switchView('gameArena');
-        DOM.displays.arenaGameName.textContent = gameName;
-        DOM.displays.arenaCanvas.innerHTML = "";
-        
-        if (GameLoopInterval) clearInterval(GameLoopInterval);
-        
-        switch (gameID) {
-            case 0: setupMemoryTilesGame(); break;
-            case 1: setupFastClickGame(); break;
-            case 2: setupNumberRushGame(); break;
-            case 3: setupPixelDodgeGame(); break;
-            case 4: setupTreasureChestGame(); break;
-            case 5: setupSimonSaysGame(); break;
-            case 6: setupPixelAttackGame(); break;
-            case 7: setupMazeEscapeGame(); break;
-            default: setupMemoryTilesGame();
-        }
-    }
-
-    function runGlobalArenaTimer(durationSeconds, completionCallback) {
-        GameTimerCountdown = durationSeconds;
-        DOM.displays.arenaTimer.textContent = `TIME: ${GameTimerCountdown}`;
+    function runGlobalCountdown(sec, triggerEnd) {
+        GameTimerCountdown = sec;
+        DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
         
         GameLoopInterval = setInterval(() => {
             GameTimerCountdown--;
-            DOM.displays.arenaTimer.textContent = `TIME: ${GameTimerCountdown}`;
+            DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
+            
             if (GameTimerCountdown <= 3 && GameTimerCountdown > 0) {
                 FX.flash('red');
             }
             if (GameTimerCountdown <= 0) {
                 clearInterval(GameLoopInterval);
-                completionCallback();
+                triggerEnd();
             }
         }, 1000);
     }
 
-    function clearActiveArenaLoop() {
-        if (GameLoopInterval) {
-            clearInterval(GameLoopInterval);
-            GameLoopInterval = null;
-        }
-        DOM.displays.arenaCanvas.innerHTML = "";
+    function startActiveArena(gameId, name) {
+        switchView('gameArena');
+        DOM.displays.arenaGameName.textContent = name;
+        DOM.displays.arenaSurface.innerHTML = "";
+
+        if (GameLoopInterval) clearInterval(GameLoopInterval);
+
+        if (gameId === 0) startChronoTap();
+        else if (gameId === 1) startNeonMatrix();
+        else if (gameId === 2) startCyberPop();
     }
 
-    function evaluateMiniGameOutcome(isWin, summaryText) {
-        clearActiveArenaLoop();
+    function concludeGame(isWin, summary) {
+        if (GameLoopInterval) clearInterval(GameLoopInterval);
+        DOM.displays.arenaSurface.innerHTML = "";
+
         AppState.currentPlayer.gamesPlayed++;
         if (isWin) {
             AppState.currentPlayer.wins++;
             DOM.displays.resultTitle.textContent = "VICTORY";
-            DOM.displays.resultTitle.className = "glow-yellow";
-            FX.flash('green', DOM.appContainer);
+            DOM.displays.resultTitle.className = "glow-text";
+            FX.flash('green');
         } else {
             DOM.displays.resultTitle.textContent = "DEFEAT";
-            DOM.displays.resultTitle.className = "glow-blue";
-            FX.shake(DOM.appContainer);
-            FX.flash('red', DOM.appContainer);
+            DOM.displays.resultTitle.className = "";
+            FX.shake();
+            FX.flash('red');
         }
 
-        DOM.displays.resultDesc.textContent = `${summaryText} (${AppState.currentPlayer.wins}/${AppState.currentPlayer.gamesPlayed} WINS)`;
-        saveSessionData();
+        DOM.displays.resultDesc.textContent = `${summary} (SCORE: ${AppState.currentPlayer.wins}/${AppState.currentPlayer.gamesPlayed})`;
+        saveSession();
         switchView('gameResult');
     }
 
     // ---------------------------------------------------------
-    // ARCADE GAME MODULES WITH INTEGRATED TOUCH/MOBILE ECOSYSTEM
+    // MINIGAME 0: CHRONO TAP (100% NATIVE DOM COMPATIBLE)
     // ---------------------------------------------------------
-
-    // --- GAME 0: MEMORY TILES ---
-    function setupMemoryTilesGame() {
-        DOM.displays.arenaScore.textContent = "MATCHES: 0/4";
-        const gridWrapper = document.createElement('div');
-        gridWrapper.style.display = "grid";
-        gridWrapper.style.gridTemplateColumns = "repeat(4, 1fr)";
-        gridWrapper.style.gap = "6px";
-        gridWrapper.style.width = "100%";
-        gridWrapper.style.maxWidth = "280px";
-
-        const tileValues = ["#ff0055", "#00b4d8", "#ffcc00", "#38b000", "#ff0055", "#00b4d8", "#ffcc00", "#38b000"];
-        const shuffledTiles = tileValues.sort(() => 0.5 - Math.random());
+    function startChronoTap() {
+        DOM.displays.arenaScore.textContent = "ALIGN THE RINGS!";
         
-        GameRuntimeData = { flipped: [], matches: 0, lockboard: false };
+        const centerCore = document.createElement('div');
+        centerCore.className = "chrono-target-zone";
+        
+        const shrinker = document.createElement('div');
+        shrinker.className = "chrono-tracker-ring";
+        
+        centerCore.appendChild(shrinker);
+        DOM.displays.arenaSurface.appendChild(centerCore);
 
-        shuffledTiles.forEach((color, idx) => {
-            const tile = document.createElement('div');
-            tile.className = "btn-pixel";
-            tile.style.height = "55px";
-            tile.style.padding = "0";
-            tile.style.backgroundColor = "#141b4d";
-            tile.style.borderColor = "#2c388c";
-            tile.dataset.color = color;
-            tile.dataset.index = idx;
+        // Responsive Action Button
+        const trigger = document.createElement('button');
+        trigger.className = "btn-pixel primary";
+        trigger.textContent = "TAP ALIGN!";
+        trigger.style.position = "absolute";
+        trigger.style.bottom = "20px";
+        DOM.displays.arenaSurface.appendChild(trigger);
 
-            tile.addEventListener('click', () => {
-                if (GameRuntimeData.lockboard || tile.classList.contains('matched') || GameRuntimeData.flipped.includes(tile)) return;
-                
-                tile.style.backgroundColor = color;
-                tile.style.borderColor = "#fff";
-                GameRuntimeData.flipped.push(tile);
-
-                if (GameRuntimeData.flipped.length === 2) {
-                    GameRuntimeData.lockboard = true;
-                    const [t1, t2] = GameRuntimeData.flipped;
-                    
-                    if (t1.dataset.color === t2.dataset.color) {
-                        t1.classList.add('matched');
-                        t2.classList.add('matched');
-                        GameRuntimeData.flipped = [];
-                        GameRuntimeData.matches++;
-                        DOM.displays.arenaScore.textContent = `MATCHES: ${GameRuntimeData.matches}/4`;
-                        FX.flash('green');
-                        GameRuntimeData.lockboard = false;
-
-                        if (GameRuntimeData.matches === 4) {
-                            clearInterval(GameLoopInterval);
-                            evaluateMiniGameOutcome(true, "PERFECT MEMORY MATRIX!");
-                        }
-                    } else {
-                        FX.shake(DOM.displays.arenaCanvas);
-                        setTimeout(() => {
-                            t1.style.backgroundColor = "#141b4d";
-                            t1.style.borderColor = "#2c388c";
-                            t2.style.backgroundColor = "#141b4d";
-                            t2.style.borderColor = "#2c388c";
-                            GameRuntimeData.flipped = [];
-                            GameRuntimeData.lockboard = false;
-                        }, 500);
-                    }
-                }
-            });
-            gridWrapper.appendChild(tile);
-        });
-
-        DOM.displays.arenaCanvas.appendChild(gridWrapper);
-        runGlobalArenaTimer(20, () => {
-            evaluateMiniGameOutcome(false, "TIME ELAPSED! SELECTION TERMINATED.");
-        });
-    }
-
-    // --- GAME 1: FAST CLICK ---
-    function setupFastClickGame() {
-        const requiredClicks = 25;
-        GameRuntimeData = { clicks: 0 };
-        DOM.displays.arenaScore.textContent = `CLICKS: 0/${requiredClicks}`;
-
-        const clickTarget = document.createElement('button');
-        clickTarget.className = "btn-pixel red";
-        clickTarget.textContent = "SMASH!";
-        clickTarget.style.fontSize = "20px";
-        clickTarget.style.padding = "35px 50px";
-
-        clickTarget.addEventListener('click', () => {
-            GameRuntimeData.clicks++;
-            DOM.displays.arenaScore.textContent = `CLICKS: ${GameRuntimeData.clicks}/${requiredClicks}`;
-            clickTarget.style.transform = `scale(${1 + (Math.random() * 0.1)}) rotate(${(Math.random() * 8 - 4)}deg)`;
-            
-            if (GameRuntimeData.clicks % 5 === 0) FX.flash('green');
-
-            if (GameRuntimeData.clicks >= requiredClicks) {
-                clearInterval(GameLoopInterval);
-                evaluateMiniGameOutcome(true, "POWER CLICK VELOCITY ACHIEVED!");
+        let size = 200;
+        const animationLoop = setInterval(() => {
+            size -= 4;
+            if (size <= 20) {
+                size = 200;
             }
-        });
+            shrinker.style.width = size + "px";
+            shrinker.style.height = size + "px";
+        }, 20);
 
-        DOM.displays.arenaCanvas.appendChild(clickTarget);
-        runGlobalArenaTimer(12, () => {
-            evaluateMiniGameOutcome(false, `INSUFFICIENT SPEED. MET ${GameRuntimeData.clicks} TARGETS.`);
-        });
-    }
-
-    // --- GAME 2: NUMBER RUSH ---
-    function setupNumberRushGame() {
-        DOM.displays.arenaScore.textContent = "NEXT NUMBER: 1";
-        const gridWrapper = document.createElement('div');
-        gridWrapper.style.display = "grid";
-        gridWrapper.style.gridTemplateColumns = "repeat(3, 1fr)";
-        gridWrapper.style.gap = "8px";
-        gridWrapper.style.width = "100%";
-        gridWrapper.style.maxWidth = "240px";
-
-        const sequence = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        const shuffledSequence = sequence.sort(() => 0.5 - Math.random());
-        GameRuntimeData = { expected: 1 };
-
-        shuffledSequence.forEach(num => {
-            const numBtn = document.createElement('button');
-            numBtn.className = "btn-pixel";
-            numBtn.textContent = num;
-            numBtn.style.padding = "18px 0";
-
-            numBtn.addEventListener('click', () => {
-                if (num === GameRuntimeData.expected) {
-                    numBtn.classList.add('disabled');
-                    numBtn.style.opacity = "0.2";
-                    GameRuntimeData.expected++;
-                    FX.flash('green');
-                    
-                    if (GameRuntimeData.expected > 9) {
-                        clearInterval(GameLoopInterval);
-                        evaluateMiniGameOutcome(true, "MATHEMATICAL RUSH COMPLETED!");
-                    } else {
-                        DOM.displays.arenaScore.textContent = `NEXT NUMBER: ${GameRuntimeData.expected}`;
-                    }
-                } else {
-                    FX.shake(DOM.displays.arenaCanvas);
-                    FX.flash('red');
-                }
-            });
-            gridWrapper.appendChild(numBtn);
-        });
-
-        DOM.displays.arenaCanvas.appendChild(gridWrapper);
-        runGlobalArenaTimer(15, () => {
-            evaluateMiniGameOutcome(false, "ALGORITHM CONSTRAINTS TIMED OUT.");
-        });
-    }
-
-    // --- GAME 3: PIXEL DODGE (MOBILE RESPONSIVE FIX) ---
-    function setupPixelDodgeGame() {
-        DOM.displays.arenaScore.textContent = "SURVIVE: 15s";
-        
-        const arenaArea = document.createElement('div');
-        arenaArea.style.position = "relative";
-        arenaArea.style.width = "100%";
-        arenaArea.style.maxWidth = "300px";
-        arenaArea.style.height = "160px";
-        arenaArea.style.backgroundColor = "#000";
-        arenaArea.style.overflow = "hidden";
-
-        const playerEntity = document.createElement('div');
-        playerEntity.style.position = "absolute";
-        playerEntity.style.bottom = "10px";
-        playerEntity.style.left = "135px"; 
-        playerEntity.style.width = "30px";
-        playerEntity.style.height = "30px";
-        playerEntity.style.backgroundColor = "#00b4d8";
-        playerEntity.style.border = "2px solid #fff";
-        arenaArea.appendChild(playerEntity);
-
-        const leftBtn = document.createElement('button');
-        leftBtn.className = "btn-pixel";
-        leftBtn.textContent = "◀ LEFT";
-        leftBtn.style.padding = "12px 20px";
-        
-        const rightBtn = document.createElement('button');
-        rightBtn.className = "btn-pixel";
-        rightBtn.textContent = "RIGHT ▶";
-        rightBtn.style.padding = "12px 20px";
-
-        const controlsRow = document.createElement('div');
-        controlsRow.style.marginTop = "12px";
-        controlsRow.style.display = "flex";
-        controlsRow.style.gap = "20px";
-        controlsRow.appendChild(leftBtn);
-        controlsRow.appendChild(rightBtn);
-
-        DOM.displays.arenaCanvas.appendChild(arenaArea);
-        DOM.displays.arenaCanvas.appendChild(controlsRow);
-
-        GameRuntimeData = { posX: 135, meteors: [], maxW: 270 };
-
-        const movePlayer = (delta) => {
-            GameRuntimeData.posX = Math.max(0, Math.min(GameRuntimeData.maxW, GameRuntimeData.posX + delta));
-            playerEntity.style.left = GameRuntimeData.posX + "px";
-        };
-
-        leftBtn.addEventListener('click', () => movePlayer(-30));
-        rightBtn.addEventListener('click', () => movePlayer(30));
-
-        const docKeydown = (e) => {
-            if (e.key === "ArrowLeft") movePlayer(-20);
-            if (e.key === "ArrowRight") movePlayer(20);
-        };
-        document.addEventListener('keydown', docKeydown);
-
-        let spawnFrameTick = 0;
-        const collisionTickInterval = setInterval(() => {
-            spawnFrameTick++;
-            if (spawnFrameTick % 10 === 0) {
-                const meteor = document.createElement('div');
-                meteor.style.position = "absolute";
-                meteor.style.top = "0px";
-                meteor.style.left = Math.floor(Math.random() * 284) + "px";
-                meteor.style.width = "16px";
-                meteor.style.height = "16px";
-                meteor.style.backgroundColor = "#d90429";
-                arenaArea.appendChild(meteor);
-                GameRuntimeData.meteors.push(meteor);
-            }
-
-            for (let i = GameRuntimeData.meteors.length - 1; i >= 0; i--) {
-                const m = GameRuntimeData.meteors[i];
-                const currentTop = parseInt(m.style.top) || 0;
-                const nextTop = currentTop + 5;
-                m.style.top = nextTop + "px";
-
-                if (nextTop > 160) {
-                    m.remove();
-                    GameRuntimeData.meteors.splice(i, 1);
-                    continue;
-                }
-
-                const mLeft = parseInt(m.style.left);
-                const pLeft = GameRuntimeData.posX;
-                
-                if (nextTop >= 120 && nextTop <= 150) {
-                    if (mLeft + 16 >= pLeft && mLeft <= pLeft + 30) {
-                        clearInterval(collisionTickInterval);
-                        clearInterval(GameLoopInterval);
-                        document.removeEventListener('keydown', docKeydown);
-                        FX.shake(DOM.appContainer);
-                        evaluateMiniGameOutcome(false, "IMPACT DETECTED! METEOR COLLISION.");
-                        return;
-                    }
-                }
-            }
-        }, 50);
-
-        runGlobalArenaTimer(15, () => {
-            clearInterval(collisionTickInterval);
-            document.removeEventListener('keydown', docKeydown);
-            evaluateMiniGameOutcome(true, "EVASION PROTOCOLS SUCCESSFUL!");
-        });
-    }
-
-    // --- GAME 4: TREASURE CHEST ---
-    function setupTreasureChestGame() {
-        const structuralTries = 2;
-        GameRuntimeData = { tries: 0, winningIndex: Math.floor(Math.random() * 3) };
-        DOM.displays.arenaScore.textContent = `ATTEMPTS LEFT: ${structuralTries}`;
-
-        const chestWrapper = document.createElement('div');
-        chestWrapper.style.display = "flex";
-        chestWrapper.style.gap = "12px";
-
-        for (let i = 0; i < 3; i++) {
-            const chest = document.createElement('button');
-            chest.className = "btn-pixel";
-            chest.textContent = "CHEST";
-            chest.style.padding = "25px 12px";
-            chest.style.backgroundColor = "#141b4d";
-
-            chest.addEventListener('click', () => {
-                if (chest.classList.contains('disabled') || GameRuntimeData.tries >= structuralTries) return;
-
-                GameRuntimeData.tries++;
-                if (i === GameRuntimeData.winningIndex) {
-                    chest.style.backgroundColor = "#ffea00";
-                    chest.textContent = "GOLD!!";
-                    FX.flash('green');
-                    clearInterval(GameLoopInterval);
-                    setTimeout(() => { evaluateMiniGameOutcome(true, "FOUND THE TRUE TREASURE!"); }, 700);
-                } else {
-                    chest.style.backgroundColor = "#222";
-                    chest.textContent = "EMPTY";
-                    chest.classList.add('disabled');
-                    FX.shake(DOM.displays.arenaCanvas);
-                    FX.flash('red');
-                    DOM.displays.arenaScore.textContent = `ATTEMPTS LEFT: ${structuralTries - GameRuntimeData.tries}`;
-
-                    if (GameRuntimeData.tries >= structuralTries) {
-                        clearInterval(GameLoopInterval);
-                        setTimeout(() => { evaluateMiniGameOutcome(false, "ALL CHESTS WERE BOOBY-TRAPPED!"); }, 700);
-                    }
-                }
-            });
-            chestWrapper.appendChild(chest);
-        }
-
-        DOM.displays.arenaCanvas.appendChild(chestWrapper);
-        runGlobalArenaTimer(15, () => {
-            evaluateMiniGameOutcome(false, "THE ROOM COLLAPSED BEFORE CHOOSING!");
-        });
-    }
-
-    // --- GAME 5: SIMON SAYS ---
-    function setupSimonSaysGame() {
-        DOM.displays.arenaScore.textContent = "WATCH PATTERN";
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.style.display = "grid";
-        buttonsContainer.style.gridTemplateColumns = "1fr 1fr";
-        buttonsContainer.style.gap = "12px";
-        buttonsContainer.style.width = "100%";
-        buttonsContainer.style.maxWidth = "200px";
-
-        const colors = ["#d90429", "#00b4d8", "#ffea00", "#38b000"];
-        const sequence = Array.from({ length: 4 }, () => Math.floor(Math.random() * 4));
-        
-        GameRuntimeData = { sequence, userStep: 0, blockInput: true };
-        const visualButtons = [];
-
-        colors.forEach((color, index) => {
-            const btn = document.createElement('div');
-            btn.className = "btn-pixel";
-            btn.style.height = "65px";
-            btn.style.backgroundColor = color;
-            btn.style.opacity = "0.3";
-
-            btn.addEventListener('click', () => {
-                if (GameRuntimeData.blockInput) return;
-                
-                btn.style.opacity = "1";
-                setTimeout(() => { btn.style.opacity = "0.3"; }, 200);
-
-                if (index === GameRuntimeData.sequence[GameRuntimeData.userStep]) {
-                    GameRuntimeData.userStep++;
-                    DOM.displays.arenaScore.textContent = `MATCHED: ${GameRuntimeData.userStep}/4`;
-                    FX.flash('green');
-                    if (GameRuntimeData.userStep === 4) {
-                        clearInterval(GameLoopInterval);
-                        evaluateMiniGameOutcome(true, "PERFECT RECALL MEMORY TUNING!");
-                    }
-                } else {
-                    clearInterval(GameLoopInterval);
-                    FX.shake(DOM.displays.arenaCanvas);
-                    evaluateMiniGameOutcome(false, "WRONG SEQUENCE ECHOED.");
-                }
-            });
-
-            visualButtons.push(btn);
-            buttonsContainer.appendChild(btn);
-        });
-
-        DOM.displays.arenaCanvas.appendChild(buttonsContainer);
-
-        let flashIdx = 0;
-        const flashInterval = setInterval(() => {
-            if (flashIdx < sequence.length) {
-                const targetBtn = visualButtons[sequence[flashIdx]];
-                targetBtn.style.opacity = "1";
-                setTimeout(() => { targetBtn.style.opacity = "0.3"; }, 400);
-                flashIdx++;
+        trigger.addEventListener('click', () => {
+            clearInterval(animationLoop);
+            // The green ring zone is 80px. If size matches close enough, win.
+            if (size >= 70 && size <= 95) {
+                concludeGame(true, "PERFECT CHRONO HARMONY!");
             } else {
-                clearInterval(flashInterval);
-                GameRuntimeData.blockInput = false;
-                DOM.displays.arenaScore.textContent = "YOUR REPEAT TURN!";
+                concludeGame(false, "ALIGNMENT DRIFT DETECTED.");
             }
-        }, 600);
+        });
 
-        runGlobalArenaTimer(20, () => {
-            evaluateMiniGameOutcome(false, "SIMON DICTATED TIME OUT.");
+        runGlobalCountdown(10, () => {
+            clearInterval(animationLoop);
+            concludeGame(false, "CHRONO INTERFACE EXPIRATION.");
         });
     }
 
-    // --- GAME 6: PIXEL ATTACK ---
-    function setupPixelAttackGame() {
-        const goalScore = 12;
-        GameRuntimeData = { hits: 0 };
-        DOM.displays.arenaScore.textContent = `TARGETS SMASHED: 0/${goalScore}`;
+    // ---------------------------------------------------------
+    // MINIGAME 1: NEON MATRIX
+    // ---------------------------------------------------------
+    function startNeonMatrix() {
+        DOM.displays.arenaScore.textContent = "REPLAY NEON ECHO...";
 
-        const gridBoard = document.createElement('div');
-        gridBoard.style.position = "relative";
-        gridBoard.style.width = "100%";
-        gridBoard.style.maxWidth = "280px";
-        gridBoard.style.height = "160px";
-        gridBoard.style.backgroundColor = "#050608";
+        const grid = document.createElement('div');
+        grid.className = "matrix-grid";
 
-        DOM.displays.arenaCanvas.appendChild(gridBoard);
+        const cells = [];
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = "matrix-node";
+            cell.dataset.index = i;
+            grid.appendChild(cell);
+            cells.push(cell);
+        }
+        DOM.displays.arenaSurface.appendChild(grid);
 
-        const spawnAndDropTarget = () => {
-            if (GameRuntimeData.hits >= goalScore || GameTimerCountdown <= 0) return;
+        const seq = Array.from({ length: 4 }, () => Math.floor(Math.random() * 9));
+        GameRuntimeData = { steps: 0, activeInput: false };
 
-            const badBlock = document.createElement('button');
-            badBlock.className = "btn-pixel red";
-            badBlock.textContent = "X";
-            badBlock.style.position = "absolute";
-            badBlock.style.padding = "8px 12px";
-            badBlock.style.top = "5px";
-            badBlock.style.left = Math.floor(Math.random() * 230) + "px";
+        // Play pattern
+        let flashStep = 0;
+        const runFlashes = setInterval(() => {
+            if (flashStep < seq.length) {
+                const target = cells[seq[flashStep]];
+                target.classList.add('flash');
+                setTimeout(() => target.classList.remove('flash'), 350);
+                flashStep++;
+            } else {
+                clearInterval(runFlashes);
+                GameRuntimeData.activeInput = true;
+                DOM.displays.arenaScore.textContent = "YOUR ECHO TURN!";
+            }
+        }, 700);
 
-            let fallInterval = setInterval(() => {
-                let currentTop = parseInt(badBlock.style.top) || 0;
-                if (currentTop > 120) {
-                    clearInterval(fallInterval);
-                    badBlock.remove();
-                    FX.shake(DOM.displays.arenaCanvas);
-                    FX.flash('red');
-                    spawnAndDropTarget();
+        cells.forEach((node, idx) => {
+            node.addEventListener('click', () => {
+                if (!GameRuntimeData.activeInput) return;
+
+                node.classList.add('flash');
+                setTimeout(() => node.classList.remove('flash'), 150);
+
+                if (idx === seq[GameRuntimeData.steps]) {
+                    GameRuntimeData.steps++;
+                    DOM.displays.arenaScore.textContent = `MATCHED: ${GameRuntimeData.steps}/4`;
+                    FX.flash('green');
+                    
+                    if (GameRuntimeData.steps === 4) {
+                        concludeGame(true, "MATRIX MATCH COMPLETE.");
+                    }
                 } else {
-                    badBlock.style.top = (currentTop + 20) + "px";
+                    concludeGame(false, "MATRIX SEQUENCE DESYNC.");
                 }
-            }, 150);
+            });
+        });
 
-            badBlock.addEventListener('click', () => {
-                clearInterval(fallInterval);
-                badBlock.remove();
-                GameRuntimeData.hits++;
-                DOM.displays.arenaScore.textContent = `TARGETS SMASHED: ${GameRuntimeData.hits}/${goalScore}`;
+        runGlobalCountdown(15, () => {
+            concludeGame(false, "SIGNAL ECHO INTERVAL TERMINATED.");
+        });
+    }
+
+    // ---------------------------------------------------------
+    // MINIGAME 2: CYBER POP
+    // ---------------------------------------------------------
+    function startCyberPop() {
+        const countRequired = 10;
+        GameRuntimeData = { popped: 0 };
+        DOM.displays.arenaScore.textContent = `POPS: 0/${countRequired}`;
+
+        const surfaceW = DOM.displays.arenaSurface.offsetWidth || 300;
+        const surfaceH = DOM.displays.arenaSurface.offsetHeight || 320;
+
+        function spawn() {
+            if (GameRuntimeData.popped >= countRequired || GameTimerCountdown <= 0) return;
+
+            const b = document.createElement('div');
+            b.className = "cyber-bubble";
+            b.textContent = Math.floor(Math.random() * 9) + 1;
+            
+            const randomX = Math.max(10, Math.min(surfaceW - 60, Math.random() * (surfaceW - 50)));
+            b.style.left = randomX + "px";
+            b.style.top = "280px";
+
+            let rise = 280;
+            const flight = setInterval(() => {
+                rise -= 3;
+                b.style.top = rise + "px";
+
+                if (rise <= 0) {
+                    clearInterval(flight);
+                    b.remove();
+                    FX.shake();
+                    spawn();
+                }
+            }, 30);
+
+            b.addEventListener('click', () => {
+                clearInterval(flight);
+                b.remove();
+                GameRuntimeData.popped++;
+                DOM.displays.arenaScore.textContent = `POPS: ${GameRuntimeData.popped}/${countRequired}`;
                 FX.flash('green');
 
-                if (GameRuntimeData.hits >= goalScore) {
-                    clearInterval(GameLoopInterval);
-                    evaluateMiniGameOutcome(true, "RETRO GRID FULLY SANITIZED!");
+                if (GameRuntimeData.popped >= countRequired) {
+                    concludeGame(true, "BUBBLE GRID CLEANSE.");
                 } else {
-                    spawnAndDropTarget();
+                    spawn();
                 }
             });
 
-            gridBoard.appendChild(badBlock);
-        };
-
-        spawnAndDropTarget();
-        spawnAndDropTarget();
-
-        runGlobalArenaTimer(20, () => {
-            evaluateMiniGameOutcome(false, `INCOMPLETE TERMINATION. INFILTRATED BY BLOCKS.`);
-        });
-    }
-
-    // --- GAME 7: MAZE ESCAPE (RE-ENGINEERED COMPACT AUTO MATRIX) ---
-    function setupMazeEscapeGame() {
-        DOM.displays.arenaScore.textContent = "ESCAPE THE LABYRINTH!";
-        
-        const mazeContainer = document.createElement('div');
-        mazeContainer.style.position = "relative";
-        mazeContainer.style.width = "150px";
-        mazeContainer.style.height = "150px";
-        mazeContainer.style.backgroundColor = "#111";
-        mazeContainer.style.border = "3px solid var(--panel-border-light)";
-
-        const layout = [
-            [0, 0, 1, 0, 0],
-            [1, 0, 1, 0, 1],
-            [0, 0, 0, 0, 0],
-            [0, 1, 1, 1, 0],
-            [0, 0, 0, 1, 0]
-        ];
-
-        for (let r = 0; r < 5; r++) {
-            for (let c = 0; c < 5; c++) {
-                if (layout[r][c] === 1) {
-                    const block = document.createElement('div');
-                    block.style.position = "absolute";
-                    block.style.width = "30px";
-                    block.style.height = "30px";
-                    block.style.backgroundColor = "#2c388c";
-                    block.style.top = (r * 30) + "px";
-                    block.style.left = (c * 30) + "px";
-                    mazeContainer.appendChild(block);
-                }
-            }
+            DOM.displays.arenaSurface.appendChild(b);
         }
 
-        const targetElement = document.createElement('div');
-        targetElement.style.position = "absolute";
-        targetElement.style.width = "30px";
-        targetElement.style.height = "30px";
-        targetElement.style.backgroundColor = "#38b000";
-        targetElement.style.top = "120px";
-        targetElement.style.left = "120px";
-        mazeContainer.appendChild(targetElement);
+        spawn();
+        spawn();
 
-        const explorerToken = document.createElement('div');
-        explorerToken.style.position = "absolute";
-        explorerToken.style.width = "20px";
-        explorerToken.style.height = "20px";
-        explorerToken.style.margin = "5px";
-        explorerToken.style.backgroundColor = "#ffea00";
-        explorerToken.style.top = "0px";
-        explorerToken.style.left = "0px";
-        mazeContainer.appendChild(explorerToken);
-
-        const controlsPad = document.createElement('div');
-        controlsPad.style.display = "grid";
-        controlsPad.style.gridTemplateColumns = "repeat(3, 1fr)";
-        controlsPad.style.gap = "6px";
-        controlsPad.style.marginTop = "10px";
-
-        GameRuntimeData = { pR: 0, pC: 0 };
-
-        const processDirection = (dr, dc) => {
-            const nextR = GameRuntimeData.pR + dr;
-            const nextC = GameRuntimeData.pC + dc;
-            
-            if (nextR >= 0 && nextR < 5 && nextC >= 0 && nextC < 5) {
-                if (layout[nextR][nextC] !== 1) {
-                    GameRuntimeData.pR = nextR;
-                    GameRuntimeData.pC = nextC;
-                    explorerToken.style.top = (nextR * 30) + "px";
-                    explorerToken.style.left = (nextC * 30) + "px";
-                    FX.flash('green');
-
-                    if (nextR === 4 && nextC === 4) {
-                        clearInterval(GameLoopInterval);
-                        evaluateMiniGameOutcome(true, "MAZE CORE ESCAPED SUCCESSFULLY!");
-                    }
-                } else {
-                    FX.shake(DOM.displays.arenaCanvas);
-                }
-            } else {
-                FX.shake(DOM.displays.arenaCanvas);
-            }
-        };
-
-        const createDirectionalButton = (label, dr, dc) => {
-            const b = document.createElement('button');
-            b.className = "btn-pixel small";
-            b.style.padding = "10px 0";
-            b.textContent = label;
-            b.addEventListener('click', () => processDirection(dr, dc));
-            return b;
-        };
-
-        const spacer = () => document.createElement('div');
-
-        controlsPad.appendChild(spacer());
-        controlsPad.appendChild(createDirectionalButton("▲", -1, 0));
-        controlsPad.appendChild(spacer());
-        controlsPad.appendChild(createDirectionalButton("◀", 0, -1));
-        controlsPad.appendChild(createDirectionalButton("▼", 1, 0));
-        controlsPad.appendChild(createDirectionalButton("▶", 0, 1));
-
-        DOM.displays.arenaCanvas.appendChild(mazeContainer);
-        DOM.displays.arenaCanvas.appendChild(controlsPad);
-
-        runGlobalArenaTimer(25, () => {
-            evaluateMiniGameOutcome(false, "LOST INSIDE THE LABYRINTH GEOMETRY.");
+        runGlobalCountdown(15, () => {
+            concludeGame(false, `POP DURATION LAPSED. MET ${GameRuntimeData.popped}/${countRequired}.`);
         });
     }
 
     // ---------------------------------------------------------
-    // POST-GAME DESTINY MATRIX EVALUATION PROCEDURES
+    // ALLOCATION FLOW & DESTINY ROULETTE
     // ---------------------------------------------------------
-    function handleResultScreenRouting() {
-        if (AppState.currentPlayer.gamesPlayed >= 3) {
-            renderDestinyProcessingView();
-            switchView('destiny');
-        } else {
-            executeGameIntroLoop();
-        }
-    }
-
-    function renderDestinyProcessingView() {
-        const wins = AppState.currentPlayer.wins;
+    function setupDestinyAllocationView() {
         const remaining = getRemainingRoles();
-
         if (remaining.length === 0) {
-            alert("CRITICAL ERROR: All roles filled mid-session.");
-            renderSummaryView();
+            buildSummaryScreen();
             switchView('summary');
             return;
         }
 
-        if (wins >= 2) {
-            DOM.displays.destinyTitle.textContent = "THE VAULT UNLOCKED";
-            DOM.displays.destinySubtitle.textContent = "SELECT YOUR DESIRED FACTION DESTINY:";
+        if (AppState.currentPlayer.wins >= 2) {
+            DOM.displays.destinyTitle.textContent = "VAULT ACQUIRED";
+            DOM.displays.destinySubtitle.textContent = "SELECT THE ROLE YOU DESIRE:";
             DOM.displays.roleGrid.classList.remove('hidden');
             DOM.displays.randomizerMachine.classList.add('hidden');
-            buildDynamicRoleGrid(remaining);
+            
+            DOM.displays.roleGrid.innerHTML = "";
+            remaining.forEach(role => {
+                const card = document.createElement('div');
+                card.className = "role-card";
+                card.textContent = role;
+                card.addEventListener('click', () => saveAssignedRole(role));
+                DOM.displays.roleGrid.appendChild(card);
+            });
         } else {
-            DOM.displays.destinyTitle.textContent = "THE VAULT SEALED";
-            DOM.displays.destinySubtitle.textContent = "CHANCE WILL ALLOCATE YOUR ASSIGNMENT:";
+            DOM.displays.destinyTitle.textContent = "VAULT SEALED";
+            DOM.displays.destinySubtitle.textContent = "RANDOM PROCESS REQUIRED:";
             DOM.displays.roleGrid.classList.add('hidden');
             DOM.displays.randomizerMachine.classList.remove('hidden');
             DOM.displays.randomizerRoulette.textContent = "???";
@@ -954,149 +514,100 @@
         }
     }
 
-    function buildDynamicRoleGrid(remainingRoles) {
-        DOM.displays.roleGrid.innerHTML = "";
-        remainingRoles.forEach(role => {
-            const card = document.createElement('div');
-            card.className = "role-card";
-            card.textContent = role;
-            card.addEventListener('click', () => {
-                FX.flash('green', DOM.appContainer);
-                finalizeRoleAllocation(role);
-            });
-            DOM.displays.roleGrid.appendChild(card);
-        });
-    }
-
-    function executeRandomizerRoulette() {
+    function runDestinyRoulette() {
         DOM.buttons.triggerRoulette.classList.add('disabled');
         const remaining = getRemainingRoles();
-        let spinCounter = 0;
-        const maxSpins = 12;
-        const baseInterval = 90;
+        let counts = 0;
+        
+        const tick = setInterval(() => {
+            const tempRole = remaining[Math.floor(Math.random() * remaining.length)];
+            DOM.displays.randomizerRoulette.textContent = tempRole.toUpperCase();
+            counts++;
 
-        function runSpin() {
-            const mockRoleIndex = Math.floor(Math.random() * remaining.length);
-            DOM.displays.randomizerRoulette.textContent = remaining[mockRoleIndex].toUpperCase();
-            FX.flash('green', DOM.displays.randomizerMachine);
-            spinCounter++;
-
-            if (spinCounter < maxSpins) {
-                setTimeout(runSpin, baseInterval + (spinCounter * 25));
-            } else {
-                const finalRoleIndex = Math.floor(Math.random() * remaining.length);
-                const definitiveRole = remaining[finalRoleIndex];
-                FX.shake(DOM.appContainer);
-                finalizeRoleAllocation(definitiveRole);
+            if (counts >= 12) {
+                clearInterval(tick);
+                const absoluteChoice = remaining[Math.floor(Math.random() * remaining.length)];
+                saveAssignedRole(absoluteChoice);
             }
-        }
-        runSpin();
+        }, 120);
     }
 
-    function finalizeRoleAllocation(allocatedRole) {
-        const playerName = AppState.currentPlayer.name;
-        
-        AppState.assignedRoles[allocatedRole] = playerName;
-        AppState.history.push({
-            name: playerName,
-            role: allocatedRole,
-            status: AppState.currentPlayer.wins >= 2 ? "CHOICE" : "RANDOM"
-        });
+    function saveAssignedRole(finalRole) {
+        const pName = AppState.currentPlayer.name;
+        AppState.assignedRoles[finalRole] = pName;
+        AppState.history.push({ name: pName, role: finalRole });
 
-        AppState.currentPlayer = { name: "", wins: 0, gamesPlayed: 0, currentGameIndex: 0, gamePool: [] };
-        saveSessionData();
-        renderSidebar();
+        // Reset turn state
+        AppState.currentPlayer = { name: "", wins: 0, gamesPlayed: 0, gamePool: [] };
+        saveSession();
+        updateUI();
 
-        DOM.displays.resolutionTitle.textContent = `${playerName.toUpperCase()}'s REALIZED DESTINY`;
-        DOM.displays.resolvedCardInner.textContent = allocatedRole.toUpperCase();
-        
-        const cardEl = document.getElementById('resolved-role-card');
-        cardEl.style.animation = 'none';
-        void cardEl.offsetWidth;
-        cardEl.style.animation = 'card-reveal-spin 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
-
+        DOM.displays.resolutionTitle.textContent = `${pName.toUpperCase()}'s DESIGNATION`;
+        DOM.displays.resolvedCardInner.textContent = finalRole.toUpperCase();
         switchView('resolution');
     }
 
-    function handleResolutionCompletion() {
-        const remaining = getRemainingRoles();
-        if (remaining.length === 0) {
-            renderSummaryView();
-            switchView('summary');
-        } else {
-            DOM.inputs.playerName.value = "";
-            switchView('inputName');
-        }
-    }
-
-    function renderSummaryView() {
+    function buildSummaryScreen() {
         DOM.displays.summaryTableBody.innerHTML = "";
-        DEFINED_ROLES.forEach(role => {
+        DEFINED_ROLES.forEach(r => {
             const tr = document.createElement('tr');
-            const thRole = document.createElement('td');
-            thRole.textContent = role;
-            const tdPlayer = document.createElement('td');
-            tdPlayer.className = "glow-yellow";
-            tdPlayer.textContent = AppState.assignedRoles[role] ? AppState.assignedRoles[role] : "UNASSIGNED VACANCY";
-            if (!AppState.assignedRoles[role]) {
-                tdPlayer.style.opacity = "0.3";
-                tdPlayer.classList.remove("glow-yellow");
-            }
-            tr.appendChild(thRole);
-            tr.appendChild(tdPlayer);
+            const tdRole = document.createElement('td');
+            tdRole.textContent = r;
+            const tdName = document.createElement('td');
+            tdName.className = AppState.assignedRoles[r] ? "glow-text" : "";
+            tdName.textContent = AppState.assignedRoles[r] || "VACANT";
+            tr.appendChild(tdRole);
+            tr.appendChild(tdName);
             DOM.displays.summaryTableBody.appendChild(tr);
         });
     }
 
-    function handleFullResetCommand() {
-        if (confirm("CRITICAL WARNING: This will permanently wipe all assigned roles and history ledger configurations. Proceed?")) {
-            if (GameLoopInterval) clearInterval(GameLoopInterval);
-            resetToDefaultState();
-            renderSidebar();
+    function handleHardSystemReset() {
+        if (confirm("THIS ACTION CANNOT BE UNDONE. RESET CURRENT TRIAL DATABASE?")) {
+            resetEngine();
+            updateUI();
             DOM.inputs.playerName.value = "";
             switchView('inputName');
         }
     }
 
     // ---------------------------------------------------------
-    // SYSTEM EVENT DRIVERS & UTILITIES
+    // SIDEBAR TRAY TOGGLE
     // ---------------------------------------------------------
-    function setupGlobalEventListeners() {
-        DOM.buttons.startJourney.addEventListener('click', handlePlayerRegistration);
-        DOM.buttons.continueJourney.addEventListener('click', handleResultScreenRouting);
-        DOM.buttons.triggerRoulette.addEventListener('click', executeRandomizerRoulette);
-        DOM.buttons.finishTurn.addEventListener('click', handleResolutionCompletion);
-        DOM.buttons.restartFull.addEventListener('click', handleFullResetCommand);
-        DOM.buttons.resetSession.addEventListener('click', handleFullResetCommand);
+    function toggleStatusTray(isOpen) {
+        DOM.displays.statusTray.classList.toggle('active', isOpen);
+    }
 
-        DOM.buttons.fullscreen.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.error(`Fullscreen escalation failed: ${err.message}`);
-                });
+    // ---------------------------------------------------------
+    // GLOBAL HANDLERS
+    // ---------------------------------------------------------
+    function setupGlobalEvents() {
+        DOM.buttons.startJourney.addEventListener('click', handleUserRegistration);
+        DOM.buttons.continueJourney.addEventListener('click', () => {
+            if (AppState.currentPlayer.gamesPlayed >= 3) {
+                setupDestinyAllocationView();
+                switchView('destiny');
             } else {
-                document.exitFullscreen();
+                beginGameIntroduction();
             }
         });
-
-        DOM.inputs.playerName.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handlePlayerRegistration();
+        DOM.buttons.triggerRoulette.addEventListener('click', runDestinyRoulette);
+        DOM.buttons.finishTurn.addEventListener('click', () => {
+            if (getRemainingRoles().length === 0) {
+                buildSummaryScreen();
+                switchView('summary');
+            } else {
+                DOM.inputs.playerName.value = "";
+                switchView('inputName');
+            }
         });
-    }
+        DOM.buttons.restartFull.addEventListener('click', handleHardSystemReset);
+        DOM.buttons.resetSession.addEventListener('click', handleHardSystemReset);
 
-    function escapeHTML(str) {
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        // Drawer Event mapping
+        DOM.buttons.toggleTray.addEventListener('click', () => toggleStatusTray(true));
+        DOM.buttons.closeTray.addEventListener('click', () => toggleStatusTray(false));
     }
-
-    // --- EASTER EGG MATRIX ---
-    window.unlockMatrixMode = function() {
-        document.documentElement.style.setProperty('--panel-bg', '#000000');
-        document.documentElement.style.setProperty('--panel-border', '#38b000');
-        document.documentElement.style.setProperty('--panel-border-light', '#00ff00');
-        document.documentElement.style.setProperty('--accent-cyan', '#00ff00');
-        FX.flash('green', DOM.appContainer);
-        return "Simulation modified.";
-    };
 
     document.addEventListener('DOMContentLoaded', init);
 }());
