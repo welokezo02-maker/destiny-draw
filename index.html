@@ -2,136 +2,140 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DESTINY DRAW</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DESTINY DRAW: MOBILE EDITION</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <!-- HEADER BAR -->
+    <div id="app-viewport">
+        <!-- HEADER -->
         <header>
-            <h1 class="glow-yellow">DESTINY DRAW</h1>
-            <div id="controls-bar">
-                <button id="btn-fullscreen" class="btn-pixel small">FS</button>
-                <button id="btn-reset-session" class="btn-pixel small red">RESET</button>
-            </div>
+            <div class="header-logo">DESTINY <span class="glow-text">DRAW</span></div>
+            <button id="btn-toggle-tray" class="btn-pixel small">📋 STATUS</button>
         </header>
 
-        <!-- MAIN LAYOUT WRAPPER -->
-        <div id="main-layout">
-            <!-- LEFT SIDEBAR: SESSION STATUS & ROLES -->
-            <aside id="sidebar">
-                <div class="panel-blue" id="remaining-roles-panel">
-                    <h3>ROLES LEFT</h3>
-                    <ul id="roles-list"></ul>
+        <!-- MAIN INTERACTIVE STAGE -->
+        <main id="game-stage">
+            
+            <!-- VIEW 1: REGISTRATION -->
+            <section id="view-input-name" class="view active">
+                <div class="card-hero">
+                    <h2>INITIATE SYSTEM</h2>
+                    <p class="subtitle">ENTER YOUR CALLSIGN TO START THE TRIAL</p>
+                    <div class="input-group">
+                        <input type="text" id="player-name-input" placeholder="PLAYER NAME..." autocomplete="off">
+                    </div>
+                    <button id="btn-start-journey" class="btn-pixel primary">START TRIAL</button>
                 </div>
-                <div class="panel-blue" id="player-history-panel">
-                    <h3>HISTORY</h3>
-                    <div id="history-list"></div>
+            </section>
+
+            <!-- VIEW 2: GAME INTRO -->
+            <section id="view-game-intro" class="view">
+                <div class="card-hero text-center">
+                    <h2 id="intro-game-title">ROUND 1/3</h2>
+                    <div class="game-meta-box">
+                        <h3 id="intro-game-name" class="glow-text">GAME NAME</h3>
+                        <p id="intro-game-desc">Game instructions go here.</p>
+                    </div>
+                    <div class="countdown-circle">
+                        <span id="intro-countdown">3</span>
+                    </div>
                 </div>
-            </aside>
+            </section>
 
-            <!-- CENTER/RIGHT STAGE: DYNAMIC VIEWS -->
-            <main id="stage">
-                <!-- VIEW 1: ENTER NAME -->
-                <section id="view-input-name" class="view active">
-                    <div class="panel-blue central-box">
-                        <h2>ENTER YOUR NAME</h2>
-                        <input type="text" id="player-name-input" maxlength="15" placeholder="NAME..." autocomplete="off">
-                        <button id="btn-start-journey" class="btn-pixel">ENTER VAULT</button>
+            <!-- VIEW 3: GAME ARENA -->
+            <section id="view-game-arena" class="view">
+                <div class="arena-header">
+                    <span id="arena-game-name" class="glow-text">GAME</span>
+                    <span id="arena-timer" class="timer-badge">15s</span>
+                </div>
+                
+                <div id="arena-score-tracking">SCORE: 0/10</div>
+
+                <!-- Game Elements will spawn natively inside here -->
+                <div id="arena-surface"></div>
+            </section>
+
+            <!-- VIEW 4: GAME RESULT -->
+            <section id="view-game-result" class="view">
+                <div class="card-hero text-center">
+                    <h2 id="result-status-title" class="glow-text">VICTORY</h2>
+                    <p id="result-status-desc">You surpassed the system constraints.</p>
+                    <button id="btn-continue-journey" class="btn-pixel primary">CONTINUE PROVING GROUND</button>
+                </div>
+            </section>
+
+            <!-- VIEW 5: DESTINY DECISION -->
+            <section id="view-destiny" class="view">
+                <div class="card-hero text-center">
+                    <h2 id="destiny-title">VAULT STATUS</h2>
+                    <p id="destiny-subtitle">Analyzing performance data...</p>
+
+                    <!-- Option A: Manual Choice Selection Grid -->
+                    <div id="role-selection-grid" class="hidden"></div>
+
+                    <!-- Option B: Automatic Randomizer Slot Machine -->
+                    <div id="randomizer-machine" class="hidden">
+                        <div id="randomizer-roulette">???</div>
+                        <button id="btn-trigger-roulette" class="btn-pixel secondary">RUN ROULETTE</button>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <!-- VIEW 2: MINI-GAME INTRO / TRANSITION -->
-                <section id="view-game-intro" class="view">
-                    <div class="panel-blue central-box">
-                        <h2 id="intro-game-title">GAME 1/3</h2>
-                        <p id="intro-game-desc">PREPARE YOURSELF...</p>
-                        <div class="countdown-display" id="intro-countdown">3</div>
-                        <button id="btn-skip-intro" class="btn-pixel hidden">START</button>
+            <!-- VIEW 6: RESOLUTION EXCLUSION CARD -->
+            <section id="view-resolution" class="view">
+                <div class="card-hero text-center">
+                    <h2 id="resolution-outcome-title">DESTINY REVEALED</h2>
+                    <div id="resolved-role-card" class="reveal-card">
+                        <div class="card-inner">RESERVED</div>
                     </div>
-                </section>
+                    <button id="btn-finish-turn" class="btn-pixel primary">COMPLETE PROTOCOL</button>
+                </div>
+            </section>
 
-                <!-- VIEW 3: MINI-GAME ARENA -->
-                <section id="view-game-arena" class="view">
-                    <div class="panel-blue arena-box">
-                        <div id="arena-header">
-                            <span id="arena-game-name">MINI GAME</span>
-                            <span id="arena-timer">TIME: 00</span>
-                        </div>
-                        <div id="arena-canvas-container">
-                            <!-- Mini-games inject their dynamic HTML inside here -->
-                        </div>
-                        <div id="arena-footer">
-                            <div id="arena-score-tracking">SCORE: 0</div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- VIEW 4: MINI-GAME RESULT -->
-                <section id="view-game-result" class="view">
-                    <div class="panel-blue central-box">
-                        <h2 id="result-status-title" class="glow-yellow">WIN</h2>
-                        <p id="result-status-desc">MATCH STATS</p>
-                        <button id="btn-continue-journey" class="btn-pixel">CONTINUE</button>
-                    </div>
-                </section>
-
-                <!-- VIEW 5: DESTINY DETERMINATION (THE VAULT CHOICE / RANDOM ASSIGNMENT) -->
-                <section id="view-destiny" class="view">
-                    <div class="panel-blue central-box full-width">
-                        <h2 id="destiny-title">THE VAULT UNLOCKED</h2>
-                        <p id="destiny-subtitle">CHOOSE YOUR ROLE</p>
-                        
-                        <!-- Choice Grid (Visible if Wins >= 2) -->
-                        <div id="role-selection-grid" class="hidden"></div>
-                        
-                        <!-- Randomizer Machine Container (Visible if Wins < 2) -->
-                        <div id="randomizer-machine" class="hidden">
-                            <div id="randomizer-roulette">???</div>
-                            <button id="btn-trigger-roulette" class="btn-pixel">DRAW DESTINY</button>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- VIEW 6: DESTINY RESOLUTION ANIMATION -->
-                <section id="view-resolution" class="view">
-                    <div class="panel-blue central-box">
-                        <h2 id="resolution-outcome-title">YOUR DESTINY</h2>
-                        <div id="resolved-role-card" class="role-card big animated">
-                            <div class="card-inner">?</div>
-                        </div>
-                        <button id="btn-finish-turn" class="btn-pixel">SAVE & NEXT</button>
-                    </div>
-                </section>
-
-                <!-- VIEW 7: SUMMARY / SESSION OVERVIEW -->
-                <section id="view-summary" class="view">
-                    <div class="panel-blue central-box full-width">
-                        <h2>FINAL CHRONICLES</h2>
-                        <table id="summary-table">
+            <!-- VIEW 7: FULL RUN SUMMARY -->
+            <section id="view-summary" class="view">
+                <div class="card-hero">
+                    <h2 class="glow-text">SYSTEM COMPLETE</h2>
+                    <p class="subtitle">ALL INSTANCES ASSIGNED</p>
+                    <div class="table-container">
+                        <table>
                             <thead>
                                 <tr>
-                                    <th>PLAYER</th>
-                                    <th>DESTINY ROLE</th>
+                                    <th>ROLE</th>
+                                    <th>ASSIGNED TO</th>
                                 </tr>
                             </thead>
                             <tbody id="summary-table-body"></tbody>
                         </table>
-                        <button id="btn-restart-full" class="btn-pixel red">NEW SESSION</button>
                     </div>
-                </section>
-            </main>
+                    <button id="btn-restart-full" class="btn-pixel danger">RESET ENGINE</button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- COLLAPSIBLE STATUS TRAY (Ideal for Mobile Bottom-Sheet UX) -->
+        <div id="status-tray">
+            <div class="tray-header">
+                <h3>SYSTEM STATUS</h3>
+                <button id="btn-close-tray" class="btn-pixel small">CLOSE</button>
+            </div>
+            <div class="tray-body">
+                <div class="tray-section">
+                    <h4>ROLES RECOGNIZED</h4>
+                    <ul id="roles-list"></ul>
+                </div>
+                <div class="tray-section">
+                    <h4>LOG ENTRY</h4>
+                    <div id="history-list"></div>
+                </div>
+                <button id="btn-reset-session" class="btn-pixel danger small">FULL SYSTEM WIPE</button>
+            </div>
         </div>
     </div>
-
-    <!-- CANVAS EFFECTS BUFFER -->
-    <canvas id="confetti-canvas"></canvas>
-
-    <!-- MAIN ENGINE -->
-    <script src="script.js"></script>
 </body>
 </html>
