@@ -1,5 +1,5 @@
 /* ==========================================================================
-   script.js - DESTINY DRAW ARCHITECTURE ENGINE (COMPLETED ARCADE SUITE)
+   script.js - DESTINY DRAW ARCHITECTURE ENGINE (WITH MILESTONE 5 FX SUITE)
    ========================================================================== */
 
 (function () {
@@ -26,7 +26,6 @@
         STATE: "destiny_draw_state_v1"
     };
 
-    // Mapping game pool indices to metadata (Expanded to 8 games)
     const MINI_GAMES_REGISTRY = [
         { id: 0, name: "MEMORY TILES", desc: "FLIP & MATCH THE PIXEL TILES!" },
         { id: 1, name: "FAST CLICK", desc: "SMASH THE BUTTON BEFORE TIME RUNS OUT!" },
@@ -53,7 +52,6 @@
         }
     };
 
-    // Runtime loop variable trackers for mini-games
     let GameLoopInterval = null;
     let GameTimerCountdown = 0;
     let GameRuntimeData = {};
@@ -62,6 +60,7 @@
     // DOM CACHE REGISTRY
     // ---------------------------------------------------------
     const DOM = {
+        appContainer: document.getElementById('app-container'),
         views: {
             inputName: document.getElementById('view-input-name'),
             gameIntro: document.getElementById('view-game-intro'),
@@ -104,6 +103,23 @@
             resolutionTitle: document.getElementById('resolution-outcome-title'),
             resolvedCardInner: document.querySelector('#resolved-role-card .card-inner'),
             summaryTableBody: document.getElementById('summary-table-body')
+        }
+    };
+
+    // ---------------------------------------------------------
+    // MILESTONE 5: VISUAL FX CONTROLLER ENGINE
+    // ---------------------------------------------------------
+    const FX = {
+        shake: function(targetElement = DOM.appContainer) {
+            targetElement.classList.remove('shake');
+            void targetElement.offsetWidth; // Trigger DOM reflow to restart animation
+            targetElement.classList.add('shake');
+            setTimeout(() => targetElement.classList.remove('shake'), 300);
+        },
+        flash: function(type = 'red', targetElement = DOM.displays.arenaCanvas) {
+            const className = type === 'red' ? 'flash-red' : 'flash-green';
+            targetElement.classList.add(className);
+            setTimeout(() => targetElement.classList.remove(className), 250);
         }
     };
 
@@ -220,6 +236,7 @@
     function handlePlayerRegistration() {
         const rawName = DOM.inputs.playerName.value.trim();
         if (!rawName) {
+            FX.shake();
             alert("IDENTIFICATION ERROR: Please enter a valid name.");
             return;
         }
@@ -243,7 +260,6 @@
     }
 
     function generateRandomizedGamePool(count) {
-        // Pool bounded to include all 8 indices [0-7]
         const gameIdentifiers = [0, 1, 2, 3, 4, 5, 6, 7];
         const shuffled = gameIdentifiers.sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
@@ -267,6 +283,7 @@
                 DOM.displays.introCountdown.textContent = counter;
             } else if (counter === 0) {
                 DOM.displays.introCountdown.textContent = "START!";
+                FX.flash('green');
             } else {
                 clearInterval(interval);
                 launchArenaCore(assignedGameID, gameMeta.name);
@@ -304,6 +321,9 @@
         GameLoopInterval = setInterval(() => {
             GameTimerCountdown--;
             DOM.displays.arenaTimer.textContent = `TIME: ${GameTimerCountdown}`;
+            if (GameTimerCountdown <= 3 && GameTimerCountdown > 0) {
+                FX.flash('red');
+            }
             if (GameTimerCountdown <= 0) {
                 clearInterval(GameLoopInterval);
                 completionCallback();
@@ -326,9 +346,12 @@
             AppState.currentPlayer.wins++;
             DOM.displays.resultTitle.textContent = "VICTORY";
             DOM.displays.resultTitle.className = "glow-yellow";
+            FX.flash('green', DOM.appContainer);
         } else {
             DOM.displays.resultTitle.textContent = "DEFEAT";
             DOM.displays.resultTitle.className = "glow-blue";
+            FX.shake(DOM.appContainer);
+            FX.flash('red', DOM.appContainer);
         }
 
         DOM.displays.resultDesc.textContent = `${summaryText} (${AppState.currentPlayer.wins}/${AppState.currentPlayer.gamesPlayed} WINS)`;
@@ -337,7 +360,7 @@
     }
 
     // ---------------------------------------------------------
-    // ARCADE GAME MODULES ENGINE IMPLEMENTATION
+    // ARCADE GAME MODULES WITH INTEGRATED FX
     // ---------------------------------------------------------
 
     // --- GAME 0: MEMORY TILES ---
@@ -380,6 +403,7 @@
                         GameRuntimeData.flipped = [];
                         GameRuntimeData.matches++;
                         DOM.displays.arenaScore.textContent = `MATCHES: ${GameRuntimeData.matches}/4`;
+                        FX.flash('green');
                         GameRuntimeData.lockboard = false;
 
                         if (GameRuntimeData.matches === 4) {
@@ -387,6 +411,7 @@
                             evaluateMiniGameOutcome(true, "PERFECT MEMORY MATRIX!");
                         }
                     } else {
+                        FX.shake(DOM.displays.arenaCanvas);
                         setTimeout(() => {
                             t1.style.backgroundColor = "#141b4d";
                             t1.style.borderColor = "#2c388c";
@@ -424,6 +449,8 @@
             DOM.displays.arenaScore.textContent = `CLICKS: ${GameRuntimeData.clicks}/${requiredClicks}`;
             clickTarget.style.transform = `scale(${1 + (Math.random() * 0.15)}) rotate(${(Math.random() * 10 - 5)}deg)`;
             
+            if (GameRuntimeData.clicks % 10 === 0) FX.flash('green');
+
             if (GameRuntimeData.clicks >= requiredClicks) {
                 clearInterval(GameLoopInterval);
                 evaluateMiniGameOutcome(true, "POWER CLICK VELOCITY ACHIEVED!");
@@ -460,6 +487,7 @@
                     numBtn.classList.add('disabled');
                     numBtn.style.opacity = "0.2";
                     GameRuntimeData.expected++;
+                    FX.flash('green');
                     
                     if (GameRuntimeData.expected > 9) {
                         clearInterval(GameLoopInterval);
@@ -468,6 +496,8 @@
                         DOM.displays.arenaScore.textContent = `NEXT NUMBER: ${GameRuntimeData.expected}`;
                     }
                 } else {
+                    FX.shake(DOM.displays.arenaCanvas);
+                    FX.flash('red');
                     numBtn.style.borderColor = "#d90429";
                     setTimeout(() => { numBtn.style.borderColor = "#2c388c"; }, 300);
                 }
@@ -581,6 +611,7 @@
                         clearInterval(collisionTickInterval);
                         clearInterval(GameLoopInterval);
                         document.removeEventListener('keydown', docKeydown);
+                        FX.shake(DOM.appContainer);
                         evaluateMiniGameOutcome(false, "IMPACT DETECTED! METEOR COLLISION.");
                         return;
                     }
@@ -619,12 +650,15 @@
                 if (i === GameRuntimeData.winningIndex) {
                     chest.style.backgroundColor = "#ffea00";
                     chest.textContent = "GOLD!!";
+                    FX.flash('green');
                     clearInterval(GameLoopInterval);
                     setTimeout(() => { evaluateMiniGameOutcome(true, "FOUND THE TRUE TREASURE!"); }, 800);
                 } else {
                     chest.style.backgroundColor = "#222";
                     chest.textContent = "EMPTY";
                     chest.classList.add('disabled');
+                    FX.shake(DOM.displays.arenaCanvas);
+                    FX.flash('red');
                     DOM.displays.arenaScore.textContent = `ATTEMPTS LEFT: ${structuralTries - GameRuntimeData.tries}`;
 
                     if (GameRuntimeData.tries >= structuralTries) {
@@ -674,12 +708,14 @@
                 if (index === GameRuntimeData.sequence[GameRuntimeData.userStep]) {
                     GameRuntimeData.userStep++;
                     DOM.displays.arenaScore.textContent = `MATCHED: ${GameRuntimeData.userStep}/4`;
+                    FX.flash('green');
                     if (GameRuntimeData.userStep === 4) {
                         clearInterval(GameLoopInterval);
                         evaluateMiniGameOutcome(true, "PERFECT RECALL MEMORY TUNING!");
                     }
                 } else {
                     clearInterval(GameLoopInterval);
+                    FX.shake(DOM.displays.arenaCanvas);
                     evaluateMiniGameOutcome(false, "WRONG SEQUENCE ECHOED.");
                 }
             });
@@ -690,7 +726,6 @@
 
         DOM.displays.arenaCanvas.appendChild(buttonsContainer);
 
-        // Flash sequence animation timeline loop
         let flashIdx = 0;
         const flashInterval = setInterval(() => {
             if (flashIdx < sequence.length) {
@@ -739,7 +774,8 @@
                 if (currentTop > 140) {
                     clearInterval(fallInterval);
                     badBlock.remove();
-                    // Penalty logic deduction constraint framework
+                    FX.shake(DOM.displays.arenaCanvas);
+                    FX.flash('red');
                     spawnAndDropTarget();
                 } else {
                     badBlock.style.top = (currentTop + 15) + "px";
@@ -751,6 +787,7 @@
                 badBlock.remove();
                 GameRuntimeData.hits++;
                 DOM.displays.arenaScore.textContent = `TARGETS SMASHED: ${GameRuntimeData.hits}/${goalScore}`;
+                FX.flash('green');
 
                 if (GameRuntimeData.hits >= goalScore) {
                     clearInterval(GameLoopInterval);
@@ -764,7 +801,7 @@
         };
 
         spawnAndDropTarget();
-        spawnAndDropTarget(); // Secondary threat intercept tracking loops
+        spawnAndDropTarget();
 
         runGlobalArenaTimer(20, () => {
             evaluateMiniGameOutcome(false, `INCOMPLETE TERMINATION. INFILTRATED BY BLOCKS.`);
@@ -782,16 +819,14 @@
         mazeContainer.style.backgroundColor = "#111";
         mazeContainer.style.border = "3px solid var(--panel-border-light)";
 
-        // 5x5 Grid matrix structure mapping (0 = path, 1 = solid walls layout)
         const layout = [
             [0, 0, 1, 0, 0],
             [1, 0, 1, 0, 1],
             [0, 0, 0, 0, 0],
             [0, 1, 1, 1, 0],
-            [0, 0, 0, 1, 0] // Target point at [4,4]
+            [0, 0, 0, 1, 0]
         ];
 
-        // Draw structural map components inside canvas
         for (let r = 0; r < 5; r++) {
             for (let c = 0; c < 5; c++) {
                 if (layout[r][c] === 1) {
@@ -807,7 +842,6 @@
             }
         }
 
-        // Win Goal Square rendering
         const targetElement = document.createElement('div');
         targetElement.style.position = "absolute";
         targetElement.style.width = "30px";
@@ -817,7 +851,6 @@
         targetElement.style.left = "120px";
         mazeContainer.appendChild(targetElement);
 
-        // Player micro token element
         const explorerToken = document.createElement('div');
         explorerToken.style.position = "absolute";
         explorerToken.style.width = "20px";
@@ -828,7 +861,6 @@
         explorerToken.style.left = "0px";
         mazeContainer.appendChild(explorerToken);
 
-        // Movement Directional UI Controls Grid Box layout
         const controlsPad = document.createElement('div');
         controlsPad.style.display = "grid";
         controlsPad.style.gridTemplateColumns = "repeat(3, 1fr)";
@@ -847,12 +879,17 @@
                     GameRuntimeData.pC = nextC;
                     explorerToken.style.top = (nextR * 30) + "px";
                     explorerToken.style.left = (nextC * 30) + "px";
+                    FX.flash('green');
 
                     if (nextR === 4 && nextC === 4) {
                         clearInterval(GameLoopInterval);
                         evaluateMiniGameOutcome(true, "MAZE CORE ESCAPED SUCCESSFULLY!");
                     }
+                } else {
+                    FX.shake(DOM.displays.arenaCanvas);
                 }
+            } else {
+                FX.shake(DOM.displays.arenaCanvas);
             }
         };
 
@@ -927,6 +964,7 @@
             card.className = "role-card";
             card.textContent = role;
             card.addEventListener('click', () => {
+                FX.flash('green', DOM.appContainer);
                 finalizeRoleAllocation(role);
             });
             DOM.displays.roleGrid.appendChild(card);
@@ -943,6 +981,7 @@
         function runSpin() {
             const mockRoleIndex = Math.floor(Math.random() * remaining.length);
             DOM.displays.randomizerRoulette.textContent = remaining[mockRoleIndex].toUpperCase();
+            FX.flash('green', DOM.displays.randomizerMachine);
             spinCounter++;
 
             if (spinCounter < maxSpins) {
@@ -950,6 +989,7 @@
             } else {
                 const finalRoleIndex = Math.floor(Math.random() * remaining.length);
                 const definitiveRole = remaining[finalRoleIndex];
+                FX.shake(DOM.appContainer);
                 finalizeRoleAllocation(definitiveRole);
             }
         }
@@ -972,6 +1012,13 @@
 
         DOM.displays.resolutionTitle.textContent = `${playerName.toUpperCase()}'s REALIZED DESTINY`;
         DOM.displays.resolvedCardInner.textContent = allocatedRole.toUpperCase();
+        
+        // Re-trigger CSS card flip animation cleanly
+        const cardEl = document.getElementById('resolved-role-card');
+        cardEl.style.animation = 'none';
+        void cardEl.offsetWidth;
+        cardEl.style.animation = 'card-reveal-spin 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+
         switchView('resolution');
     }
 
