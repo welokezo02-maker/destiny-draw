@@ -1,5 +1,5 @@
 /* ==========================================================================
-   script.js - DESTINY DRAW ARCHITECTURE ENGINE (WITH MILESTONE 5 FX SUITE)
+   script.js - DESTINY DRAW ARCHITECTURE ENGINE (UNIVERSAL MOBILE COMPATIBLE)
    ========================================================================== */
 
 (function () {
@@ -107,12 +107,12 @@
     };
 
     // ---------------------------------------------------------
-    // MILESTONE 5: VISUAL FX CONTROLLER ENGINE
+    // VISUAL FX CONTROLLER ENGINE
     // ---------------------------------------------------------
     const FX = {
         shake: function(targetElement = DOM.appContainer) {
             targetElement.classList.remove('shake');
-            void targetElement.offsetWidth; // Trigger DOM reflow to restart animation
+            void targetElement.offsetWidth; 
             targetElement.classList.add('shake');
             setTimeout(() => targetElement.classList.remove('shake'), 300);
         },
@@ -360,7 +360,7 @@
     }
 
     // ---------------------------------------------------------
-    // ARCADE GAME MODULES WITH INTEGRATED FX
+    // ARCADE GAME MODULES WITH INTEGRATED TOUCH/MOBILE ECOSYSTEM
     // ---------------------------------------------------------
 
     // --- GAME 0: MEMORY TILES ---
@@ -369,8 +369,9 @@
         const gridWrapper = document.createElement('div');
         gridWrapper.style.display = "grid";
         gridWrapper.style.gridTemplateColumns = "repeat(4, 1fr)";
-        gridWrapper.style.gap = "8px";
-        gridWrapper.style.width = "240px";
+        gridWrapper.style.gap = "6px";
+        gridWrapper.style.width = "100%";
+        gridWrapper.style.maxWidth = "280px";
 
         const tileValues = ["#ff0055", "#00b4d8", "#ffcc00", "#38b000", "#ff0055", "#00b4d8", "#ffcc00", "#38b000"];
         const shuffledTiles = tileValues.sort(() => 0.5 - Math.random());
@@ -380,7 +381,8 @@
         shuffledTiles.forEach((color, idx) => {
             const tile = document.createElement('div');
             tile.className = "btn-pixel";
-            tile.style.height = "50px";
+            tile.style.height = "55px";
+            tile.style.padding = "0";
             tile.style.backgroundColor = "#141b4d";
             tile.style.borderColor = "#2c388c";
             tile.dataset.color = color;
@@ -419,7 +421,7 @@
                             t2.style.borderColor = "#2c388c";
                             GameRuntimeData.flipped = [];
                             GameRuntimeData.lockboard = false;
-                        }, 600);
+                        }, 500);
                     }
                 }
             });
@@ -434,22 +436,22 @@
 
     // --- GAME 1: FAST CLICK ---
     function setupFastClickGame() {
-        const requiredClicks = 30;
+        const requiredClicks = 25;
         GameRuntimeData = { clicks: 0 };
         DOM.displays.arenaScore.textContent = `CLICKS: 0/${requiredClicks}`;
 
         const clickTarget = document.createElement('button');
         clickTarget.className = "btn-pixel red";
         clickTarget.textContent = "SMASH!";
-        clickTarget.style.fontSize = "16px";
-        clickTarget.style.padding = "30px 40px";
+        clickTarget.style.fontSize = "20px";
+        clickTarget.style.padding = "35px 50px";
 
         clickTarget.addEventListener('click', () => {
             GameRuntimeData.clicks++;
             DOM.displays.arenaScore.textContent = `CLICKS: ${GameRuntimeData.clicks}/${requiredClicks}`;
-            clickTarget.style.transform = `scale(${1 + (Math.random() * 0.15)}) rotate(${(Math.random() * 10 - 5)}deg)`;
+            clickTarget.style.transform = `scale(${1 + (Math.random() * 0.1)}) rotate(${(Math.random() * 8 - 4)}deg)`;
             
-            if (GameRuntimeData.clicks % 10 === 0) FX.flash('green');
+            if (GameRuntimeData.clicks % 5 === 0) FX.flash('green');
 
             if (GameRuntimeData.clicks >= requiredClicks) {
                 clearInterval(GameLoopInterval);
@@ -469,8 +471,9 @@
         const gridWrapper = document.createElement('div');
         gridWrapper.style.display = "grid";
         gridWrapper.style.gridTemplateColumns = "repeat(3, 1fr)";
-        gridWrapper.style.gap = "10px";
-        gridWrapper.style.width = "220px";
+        gridWrapper.style.gap = "8px";
+        gridWrapper.style.width = "100%";
+        gridWrapper.style.maxWidth = "240px";
 
         const sequence = [1, 2, 3, 4, 5, 6, 7, 8, 9];
         const shuffledSequence = sequence.sort(() => 0.5 - Math.random());
@@ -480,7 +483,7 @@
             const numBtn = document.createElement('button');
             numBtn.className = "btn-pixel";
             numBtn.textContent = num;
-            numBtn.style.padding = "15px";
+            numBtn.style.padding = "18px 0";
 
             numBtn.addEventListener('click', () => {
                 if (num === GameRuntimeData.expected) {
@@ -498,8 +501,6 @@
                 } else {
                     FX.shake(DOM.displays.arenaCanvas);
                     FX.flash('red');
-                    numBtn.style.borderColor = "#d90429";
-                    setTimeout(() => { numBtn.style.borderColor = "#2c388c"; }, 300);
                 }
             });
             gridWrapper.appendChild(numBtn);
@@ -511,82 +512,75 @@
         });
     }
 
-    // --- GAME 3: PIXEL DODGE ---
+    // --- GAME 3: PIXEL DODGE (MOBILE RESPONSIVE FIX) ---
     function setupPixelDodgeGame() {
         DOM.displays.arenaScore.textContent = "SURVIVE: 15s";
         
         const arenaArea = document.createElement('div');
         arenaArea.style.position = "relative";
         arenaArea.style.width = "100%";
-        arenaArea.style.height = "180px";
+        arenaArea.style.maxWidth = "300px";
+        arenaArea.style.height = "160px";
         arenaArea.style.backgroundColor = "#000";
         arenaArea.style.overflow = "hidden";
 
         const playerEntity = document.createElement('div');
-        playerEntity.className = "btn-pixel";
         playerEntity.style.position = "absolute";
         playerEntity.style.bottom = "10px";
-        playerEntity.style.left = "calc(50% - 15px)";
+        playerEntity.style.left = "135px"; 
         playerEntity.style.width = "30px";
         playerEntity.style.height = "30px";
-        playerEntity.style.padding = "0";
         playerEntity.style.backgroundColor = "#00b4d8";
+        playerEntity.style.border = "2px solid #fff";
         arenaArea.appendChild(playerEntity);
 
         const leftBtn = document.createElement('button');
-        leftBtn.className = "btn-pixel small";
-        leftBtn.textContent = "<<";
-        leftBtn.style.marginRight = "20px";
+        leftBtn.className = "btn-pixel";
+        leftBtn.textContent = "◀ LEFT";
+        leftBtn.style.padding = "12px 20px";
         
         const rightBtn = document.createElement('button');
-        rightBtn.className = "btn-pixel small";
-        rightBtn.textContent = ">>";
+        rightBtn.className = "btn-pixel";
+        rightBtn.textContent = "RIGHT ▶";
+        rightBtn.style.padding = "12px 20px";
 
         const controlsRow = document.createElement('div');
-        controlsRow.style.marginTop = "8px";
+        controlsRow.style.marginTop = "12px";
+        controlsRow.style.display = "flex";
+        controlsRow.style.gap = "20px";
         controlsRow.appendChild(leftBtn);
         controlsRow.appendChild(rightBtn);
 
         DOM.displays.arenaCanvas.appendChild(arenaArea);
         DOM.displays.arenaCanvas.appendChild(controlsRow);
 
-        GameRuntimeData = { posX: 110, meteors: [], survivalTime: 15 };
+        GameRuntimeData = { posX: 135, meteors: [], maxW: 270 };
 
-        leftBtn.addEventListener('click', () => {
-            GameRuntimeData.posX = Math.max(0, GameRuntimeData.posX - 25);
+        const movePlayer = (delta) => {
+            GameRuntimeData.posX = Math.max(0, Math.min(GameRuntimeData.maxW, GameRuntimeData.posX + delta));
             playerEntity.style.left = GameRuntimeData.posX + "px";
-        });
+        };
 
-        rightBtn.addEventListener('click', () => {
-            const maxBoundary = arenaArea.clientWidth - 30;
-            GameRuntimeData.posX = Math.min(maxBoundary, GameRuntimeData.posX + 25);
-            playerEntity.style.left = GameRuntimeData.posX + "px";
-        });
+        leftBtn.addEventListener('click', () => movePlayer(-30));
+        rightBtn.addEventListener('click', () => movePlayer(30));
 
         const docKeydown = (e) => {
-            if (e.key === "ArrowLeft") {
-                GameRuntimeData.posX = Math.max(0, GameRuntimeData.posX - 20);
-                playerEntity.style.left = GameRuntimeData.posX + "px";
-            } else if (e.key === "ArrowRight") {
-                const maxBoundary = arenaArea.clientWidth - 30;
-                GameRuntimeData.posX = Math.min(maxBoundary, GameRuntimeData.posX + 20);
-                playerEntity.style.left = GameRuntimeData.posX + "px";
-            }
+            if (e.key === "ArrowLeft") movePlayer(-20);
+            if (e.key === "ArrowRight") movePlayer(20);
         };
         document.addEventListener('keydown', docKeydown);
 
         let spawnFrameTick = 0;
         const collisionTickInterval = setInterval(() => {
             spawnFrameTick++;
-            if (spawnFrameTick % 12 === 0) {
+            if (spawnFrameTick % 10 === 0) {
                 const meteor = document.createElement('div');
                 meteor.style.position = "absolute";
                 meteor.style.top = "0px";
-                meteor.style.left = Math.floor(Math.random() * (arenaArea.clientWidth - 16)) + "px";
+                meteor.style.left = Math.floor(Math.random() * 284) + "px";
                 meteor.style.width = "16px";
                 meteor.style.height = "16px";
                 meteor.style.backgroundColor = "#d90429";
-                meteor.style.border = "2px solid #80001c";
                 arenaArea.appendChild(meteor);
                 GameRuntimeData.meteors.push(meteor);
             }
@@ -594,10 +588,10 @@
             for (let i = GameRuntimeData.meteors.length - 1; i >= 0; i--) {
                 const m = GameRuntimeData.meteors[i];
                 const currentTop = parseInt(m.style.top) || 0;
-                const nextTop = currentTop + 6;
+                const nextTop = currentTop + 5;
                 m.style.top = nextTop + "px";
 
-                if (nextTop > 180) {
+                if (nextTop > 160) {
                     m.remove();
                     GameRuntimeData.meteors.splice(i, 1);
                     continue;
@@ -606,7 +600,7 @@
                 const mLeft = parseInt(m.style.left);
                 const pLeft = GameRuntimeData.posX;
                 
-                if (nextTop >= 140 && nextTop <= 170) {
+                if (nextTop >= 120 && nextTop <= 150) {
                     if (mLeft + 16 >= pLeft && mLeft <= pLeft + 30) {
                         clearInterval(collisionTickInterval);
                         clearInterval(GameLoopInterval);
@@ -634,13 +628,13 @@
 
         const chestWrapper = document.createElement('div');
         chestWrapper.style.display = "flex";
-        chestWrapper.style.gap = "15px";
+        chestWrapper.style.gap = "12px";
 
         for (let i = 0; i < 3; i++) {
             const chest = document.createElement('button');
             chest.className = "btn-pixel";
             chest.textContent = "CHEST";
-            chest.style.padding = "25px 15px";
+            chest.style.padding = "25px 12px";
             chest.style.backgroundColor = "#141b4d";
 
             chest.addEventListener('click', () => {
@@ -652,7 +646,7 @@
                     chest.textContent = "GOLD!!";
                     FX.flash('green');
                     clearInterval(GameLoopInterval);
-                    setTimeout(() => { evaluateMiniGameOutcome(true, "FOUND THE TRUE TREASURE!"); }, 800);
+                    setTimeout(() => { evaluateMiniGameOutcome(true, "FOUND THE TRUE TREASURE!"); }, 700);
                 } else {
                     chest.style.backgroundColor = "#222";
                     chest.textContent = "EMPTY";
@@ -663,7 +657,7 @@
 
                     if (GameRuntimeData.tries >= structuralTries) {
                         clearInterval(GameLoopInterval);
-                        setTimeout(() => { evaluateMiniGameOutcome(false, "ALL CHESTS WERE BOOBY-TRAPPED!"); }, 800);
+                        setTimeout(() => { evaluateMiniGameOutcome(false, "ALL CHESTS WERE BOOBY-TRAPPED!"); }, 700);
                     }
                 }
             });
@@ -682,8 +676,9 @@
         const buttonsContainer = document.createElement('div');
         buttonsContainer.style.display = "grid";
         buttonsContainer.style.gridTemplateColumns = "1fr 1fr";
-        buttonsContainer.style.gap = "15px";
-        buttonsContainer.style.width = "180px";
+        buttonsContainer.style.gap = "12px";
+        buttonsContainer.style.width = "100%";
+        buttonsContainer.style.maxWidth = "200px";
 
         const colors = ["#d90429", "#00b4d8", "#ffea00", "#38b000"];
         const sequence = Array.from({ length: 4 }, () => Math.floor(Math.random() * 4));
@@ -694,10 +689,9 @@
         colors.forEach((color, index) => {
             const btn = document.createElement('div');
             btn.className = "btn-pixel";
-            btn.style.height = "60px";
+            btn.style.height = "65px";
             btn.style.backgroundColor = color;
             btn.style.opacity = "0.3";
-            btn.style.borderColor = "#000";
 
             btn.addEventListener('click', () => {
                 if (GameRuntimeData.blockInput) return;
@@ -738,7 +732,7 @@
                 GameRuntimeData.blockInput = false;
                 DOM.displays.arenaScore.textContent = "YOUR REPEAT TURN!";
             }
-        }, 700);
+        }, 600);
 
         runGlobalArenaTimer(20, () => {
             evaluateMiniGameOutcome(false, "SIMON DICTATED TIME OUT.");
@@ -747,14 +741,16 @@
 
     // --- GAME 6: PIXEL ATTACK ---
     function setupPixelAttackGame() {
-        const goalScore = 15;
+        const goalScore = 12;
         GameRuntimeData = { hits: 0 };
         DOM.displays.arenaScore.textContent = `TARGETS SMASHED: 0/${goalScore}`;
 
         const gridBoard = document.createElement('div');
         gridBoard.style.position = "relative";
         gridBoard.style.width = "100%";
-        gridBoard.style.height = "100%";
+        gridBoard.style.maxWidth = "280px";
+        gridBoard.style.height = "160px";
+        gridBoard.style.backgroundColor = "#050608";
 
         DOM.displays.arenaCanvas.appendChild(gridBoard);
 
@@ -765,22 +761,22 @@
             badBlock.className = "btn-pixel red";
             badBlock.textContent = "X";
             badBlock.style.position = "absolute";
-            badBlock.style.padding = "6px 10px";
-            badBlock.style.top = "10px";
-            badBlock.style.left = Math.floor(Math.random() * (gridBoard.clientWidth - 40)) + "px";
+            badBlock.style.padding = "8px 12px";
+            badBlock.style.top = "5px";
+            badBlock.style.left = Math.floor(Math.random() * 230) + "px";
 
             let fallInterval = setInterval(() => {
                 let currentTop = parseInt(badBlock.style.top) || 0;
-                if (currentTop > 140) {
+                if (currentTop > 120) {
                     clearInterval(fallInterval);
                     badBlock.remove();
                     FX.shake(DOM.displays.arenaCanvas);
                     FX.flash('red');
                     spawnAndDropTarget();
                 } else {
-                    badBlock.style.top = (currentTop + 15) + "px";
+                    badBlock.style.top = (currentTop + 20) + "px";
                 }
-            }, 120);
+            }, 150);
 
             badBlock.addEventListener('click', () => {
                 clearInterval(fallInterval);
@@ -808,9 +804,9 @@
         });
     }
 
-    // --- GAME 7: MAZE ESCAPE ---
+    // --- GAME 7: MAZE ESCAPE (RE-ENGINEERED COMPACT AUTO MATRIX) ---
     function setupMazeEscapeGame() {
-        DOM.displays.arenaScore.textContent = "REACH THE GREEN SQUARE!";
+        DOM.displays.arenaScore.textContent = "ESCAPE THE LABYRINTH!";
         
         const mazeContainer = document.createElement('div');
         mazeContainer.style.position = "relative";
@@ -864,8 +860,8 @@
         const controlsPad = document.createElement('div');
         controlsPad.style.display = "grid";
         controlsPad.style.gridTemplateColumns = "repeat(3, 1fr)";
-        controlsPad.style.gap = "4px";
-        controlsPad.style.marginLeft = "15px";
+        controlsPad.style.gap = "6px";
+        controlsPad.style.marginTop = "10px";
 
         GameRuntimeData = { pR: 0, pC: 0 };
 
@@ -896,6 +892,7 @@
         const createDirectionalButton = (label, dr, dc) => {
             const b = document.createElement('button');
             b.className = "btn-pixel small";
+            b.style.padding = "10px 0";
             b.textContent = label;
             b.addEventListener('click', () => processDirection(dr, dc));
             return b;
@@ -904,11 +901,11 @@
         const spacer = () => document.createElement('div');
 
         controlsPad.appendChild(spacer());
-        controlsPad.appendChild(createDirectionalButton("U", -1, 0));
+        controlsPad.appendChild(createDirectionalButton("▲", -1, 0));
         controlsPad.appendChild(spacer());
-        controlsPad.appendChild(createDirectionalButton("L", 0, -1));
-        controlsPad.appendChild(createDirectionalButton("D", 1, 0));
-        controlsPad.appendChild(createDirectionalButton("R", 0, 1));
+        controlsPad.appendChild(createDirectionalButton("◀", 0, -1));
+        controlsPad.appendChild(createDirectionalButton("▼", 1, 0));
+        controlsPad.appendChild(createDirectionalButton("▶", 0, 1));
 
         DOM.displays.arenaCanvas.appendChild(mazeContainer);
         DOM.displays.arenaCanvas.appendChild(controlsPad);
@@ -975,8 +972,8 @@
         DOM.buttons.triggerRoulette.classList.add('disabled');
         const remaining = getRemainingRoles();
         let spinCounter = 0;
-        const maxSpins = 15;
-        const baseInterval = 100;
+        const maxSpins = 12;
+        const baseInterval = 90;
 
         function runSpin() {
             const mockRoleIndex = Math.floor(Math.random() * remaining.length);
@@ -985,7 +982,7 @@
             spinCounter++;
 
             if (spinCounter < maxSpins) {
-                setTimeout(runSpin, baseInterval + (spinCounter * 20));
+                setTimeout(runSpin, baseInterval + (spinCounter * 25));
             } else {
                 const finalRoleIndex = Math.floor(Math.random() * remaining.length);
                 const definitiveRole = remaining[finalRoleIndex];
@@ -1013,7 +1010,6 @@
         DOM.displays.resolutionTitle.textContent = `${playerName.toUpperCase()}'s REALIZED DESTINY`;
         DOM.displays.resolvedCardInner.textContent = allocatedRole.toUpperCase();
         
-        // Re-trigger CSS card flip animation cleanly
         const cardEl = document.getElementById('resolved-role-card');
         cardEl.style.animation = 'none';
         void cardEl.offsetWidth;
@@ -1092,19 +1088,15 @@
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    document.addEventListener('DOMContentLoaded', init);
-   // ---------------------------------------------------------
-    // SYSTEM EASTER EGG: ARCADE MATRIX CHEAT CODE
-    // ---------------------------------------------------------
+    // --- EASTER EGG MATRIX ---
     window.unlockMatrixMode = function() {
-        console.log("%c🔴 MATRIX MODE ACTIVATED 🔴", "color: #38b000; font-size: 16px; font-weight: bold;");
         document.documentElement.style.setProperty('--panel-bg', '#000000');
         document.documentElement.style.setProperty('--panel-border', '#38b000');
         document.documentElement.style.setProperty('--panel-border-light', '#00ff00');
         document.documentElement.style.setProperty('--accent-cyan', '#00ff00');
         FX.flash('green', DOM.appContainer);
-        return "The simulation has been updated.";
+        return "Simulation modified.";
     };
-    console.log("%c🎮 DESTINY ARCHITECTURE RUNNING v1.0.0", "color: #00b4d8; font-weight: bold;");
-    console.log("Type 'unlockMatrixMode()' to override system visuals.");
+
+    document.addEventListener('DOMContentLoaded', init);
 }());
