@@ -1,5 +1,5 @@
 /* ==========================================================================
-   script.js - DESTINY DRAW ARCHITECTURE ENGINE (WITH ARCADE SUITE PART I)
+   script.js - DESTINY DRAW ARCHITECTURE ENGINE (COMPLETED ARCADE SUITE)
    ========================================================================== */
 
 (function () {
@@ -26,12 +26,16 @@
         STATE: "destiny_draw_state_v1"
     };
 
-    // Mapping game pool indices to metadata
+    // Mapping game pool indices to metadata (Expanded to 8 games)
     const MINI_GAMES_REGISTRY = [
         { id: 0, name: "MEMORY TILES", desc: "FLIP & MATCH THE PIXEL TILES!" },
         { id: 1, name: "FAST CLICK", desc: "SMASH THE BUTTON BEFORE TIME RUNS OUT!" },
         { id: 2, name: "NUMBER RUSH", desc: "CLICK NUMBERS IN ASCENDING ORDER!" },
-        { id: 3, name: "PIXEL DODGE", desc: "DODGE THE INCOMING METEOR TILES!" }
+        { id: 3, name: "PIXEL DODGE", desc: "DODGE THE INCOMING METEOR TILES!" },
+        { id: 4, name: "TREASURE CHEST", desc: "GUESS WHICH CHEST HOLDS THE GOLD!" },
+        { id: 5, name: "SIMON SAYS", desc: "REPEAT THE FLASHING COLOR PATTERN!" },
+        { id: 6, name: "PIXEL ATTACK", desc: "DEFEND AGAINST THE FALLING BLOCKS!" },
+        { id: 7, name: "MAZE ESCAPE", desc: "NAVIGATE THE PIXEL AVATAR TO THE EXIT!" }
     ];
 
     // ---------------------------------------------------------
@@ -239,8 +243,8 @@
     }
 
     function generateRandomizedGamePool(count) {
-        // Pool bounded to indices corresponding to implemented components [0-3]
-        const gameIdentifiers = [0, 1, 2, 3];
+        // Pool bounded to include all 8 indices [0-7]
+        const gameIdentifiers = [0, 1, 2, 3, 4, 5, 6, 7];
         const shuffled = gameIdentifiers.sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
     }
@@ -280,12 +284,15 @@
         
         if (GameLoopInterval) clearInterval(GameLoopInterval);
         
-        // Dynamic Allocation Strategy based on configuration mappings
         switch (gameID) {
             case 0: setupMemoryTilesGame(); break;
             case 1: setupFastClickGame(); break;
             case 2: setupNumberRushGame(); break;
             case 3: setupPixelDodgeGame(); break;
+            case 4: setupTreasureChestGame(); break;
+            case 5: setupSimonSaysGame(); break;
+            case 6: setupPixelAttackGame(); break;
+            case 7: setupMazeEscapeGame(); break;
             default: setupMemoryTilesGame();
         }
     }
@@ -342,15 +349,10 @@
         gridWrapper.style.gap = "8px";
         gridWrapper.style.width = "240px";
 
-        // Generate 4 matching pixel color configurations
         const tileValues = ["#ff0055", "#00b4d8", "#ffcc00", "#38b000", "#ff0055", "#00b4d8", "#ffcc00", "#38b000"];
         const shuffledTiles = tileValues.sort(() => 0.5 - Math.random());
         
-        GameRuntimeData = {
-            flipped: [],
-            matches: 0,
-            lockboard: false
-        };
+        GameRuntimeData = { flipped: [], matches: 0, lockboard: false };
 
         shuffledTiles.forEach((color, idx) => {
             const tile = document.createElement('div');
@@ -420,8 +422,6 @@
         clickTarget.addEventListener('click', () => {
             GameRuntimeData.clicks++;
             DOM.displays.arenaScore.textContent = `CLICKS: ${GameRuntimeData.clicks}/${requiredClicks}`;
-            
-            // Random jitter placement configuration feedback response
             clickTarget.style.transform = `scale(${1 + (Math.random() * 0.15)}) rotate(${(Math.random() * 10 - 5)}deg)`;
             
             if (GameRuntimeData.clicks >= requiredClicks) {
@@ -468,7 +468,6 @@
                         DOM.displays.arenaScore.textContent = `NEXT NUMBER: ${GameRuntimeData.expected}`;
                     }
                 } else {
-                    // Striking penalization logic constraint loop
                     numBtn.style.borderColor = "#d90429";
                     setTimeout(() => { numBtn.style.borderColor = "#2c388c"; }, 300);
                 }
@@ -493,7 +492,6 @@
         arenaArea.style.backgroundColor = "#000";
         arenaArea.style.overflow = "hidden";
 
-        // Avatar player block entity instantiation
         const playerEntity = document.createElement('div');
         playerEntity.className = "btn-pixel";
         playerEntity.style.position = "absolute";
@@ -505,7 +503,6 @@
         playerEntity.style.backgroundColor = "#00b4d8";
         arenaArea.appendChild(playerEntity);
 
-        // Control steering interface matrices buttons
         const leftBtn = document.createElement('button');
         leftBtn.className = "btn-pixel small";
         leftBtn.textContent = "<<";
@@ -523,11 +520,7 @@
         DOM.displays.arenaCanvas.appendChild(arenaArea);
         DOM.displays.arenaCanvas.appendChild(controlsRow);
 
-        GameRuntimeData = {
-            posX: 110,
-            meteors: [],
-            survivalTime: 15
-        };
+        GameRuntimeData = { posX: 110, meteors: [], survivalTime: 15 };
 
         leftBtn.addEventListener('click', () => {
             GameRuntimeData.posX = Math.max(0, GameRuntimeData.posX - 25);
@@ -540,7 +533,6 @@
             playerEntity.style.left = GameRuntimeData.posX + "px";
         });
 
-        // Keyboard bindings alternative tracking loop overrides
         const docKeydown = (e) => {
             if (e.key === "ArrowLeft") {
                 GameRuntimeData.posX = Math.max(0, GameRuntimeData.posX - 20);
@@ -553,12 +545,9 @@
         };
         document.addEventListener('keydown', docKeydown);
 
-        // Frame update ticking handler interval mapping rule arrays
         let spawnFrameTick = 0;
         const collisionTickInterval = setInterval(() => {
             spawnFrameTick++;
-            
-            // Random spawn iteration tracking criteria metrics
             if (spawnFrameTick % 12 === 0) {
                 const meteor = document.createElement('div');
                 meteor.style.position = "absolute";
@@ -572,21 +561,18 @@
                 GameRuntimeData.meteors.push(meteor);
             }
 
-            // Move and inspect collisions vectors
             for (let i = GameRuntimeData.meteors.length - 1; i >= 0; i--) {
                 const m = GameRuntimeData.meteors[i];
                 const currentTop = parseInt(m.style.top) || 0;
                 const nextTop = currentTop + 6;
                 m.style.top = nextTop + "px";
 
-                // Out of bounds cleanup rules array optimization loop
                 if (nextTop > 180) {
                     m.remove();
                     GameRuntimeData.meteors.splice(i, 1);
                     continue;
                 }
 
-                // Rigid collision detection box evaluation criteria parameters
                 const mLeft = parseInt(m.style.left);
                 const pLeft = GameRuntimeData.posX;
                 
@@ -606,6 +592,292 @@
             clearInterval(collisionTickInterval);
             document.removeEventListener('keydown', docKeydown);
             evaluateMiniGameOutcome(true, "EVASION PROTOCOLS SUCCESSFUL!");
+        });
+    }
+
+    // --- GAME 4: TREASURE CHEST ---
+    function setupTreasureChestGame() {
+        const structuralTries = 2;
+        GameRuntimeData = { tries: 0, winningIndex: Math.floor(Math.random() * 3) };
+        DOM.displays.arenaScore.textContent = `ATTEMPTS LEFT: ${structuralTries}`;
+
+        const chestWrapper = document.createElement('div');
+        chestWrapper.style.display = "flex";
+        chestWrapper.style.gap = "15px";
+
+        for (let i = 0; i < 3; i++) {
+            const chest = document.createElement('button');
+            chest.className = "btn-pixel";
+            chest.textContent = "CHEST";
+            chest.style.padding = "25px 15px";
+            chest.style.backgroundColor = "#141b4d";
+
+            chest.addEventListener('click', () => {
+                if (chest.classList.contains('disabled') || GameRuntimeData.tries >= structuralTries) return;
+
+                GameRuntimeData.tries++;
+                if (i === GameRuntimeData.winningIndex) {
+                    chest.style.backgroundColor = "#ffea00";
+                    chest.textContent = "GOLD!!";
+                    clearInterval(GameLoopInterval);
+                    setTimeout(() => { evaluateMiniGameOutcome(true, "FOUND THE TRUE TREASURE!"); }, 800);
+                } else {
+                    chest.style.backgroundColor = "#222";
+                    chest.textContent = "EMPTY";
+                    chest.classList.add('disabled');
+                    DOM.displays.arenaScore.textContent = `ATTEMPTS LEFT: ${structuralTries - GameRuntimeData.tries}`;
+
+                    if (GameRuntimeData.tries >= structuralTries) {
+                        clearInterval(GameLoopInterval);
+                        setTimeout(() => { evaluateMiniGameOutcome(false, "ALL CHESTS WERE BOOBY-TRAPPED!"); }, 800);
+                    }
+                }
+            });
+            chestWrapper.appendChild(chest);
+        }
+
+        DOM.displays.arenaCanvas.appendChild(chestWrapper);
+        runGlobalArenaTimer(15, () => {
+            evaluateMiniGameOutcome(false, "THE ROOM COLLAPSED BEFORE CHOOSING!");
+        });
+    }
+
+    // --- GAME 5: SIMON SAYS ---
+    function setupSimonSaysGame() {
+        DOM.displays.arenaScore.textContent = "WATCH PATTERN";
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = "grid";
+        buttonsContainer.style.gridTemplateColumns = "1fr 1fr";
+        buttonsContainer.style.gap = "15px";
+        buttonsContainer.style.width = "180px";
+
+        const colors = ["#d90429", "#00b4d8", "#ffea00", "#38b000"];
+        const sequence = Array.from({ length: 4 }, () => Math.floor(Math.random() * 4));
+        
+        GameRuntimeData = { sequence, userStep: 0, blockInput: true };
+        const visualButtons = [];
+
+        colors.forEach((color, index) => {
+            const btn = document.createElement('div');
+            btn.className = "btn-pixel";
+            btn.style.height = "60px";
+            btn.style.backgroundColor = color;
+            btn.style.opacity = "0.3";
+            btn.style.borderColor = "#000";
+
+            btn.addEventListener('click', () => {
+                if (GameRuntimeData.blockInput) return;
+                
+                btn.style.opacity = "1";
+                setTimeout(() => { btn.style.opacity = "0.3"; }, 200);
+
+                if (index === GameRuntimeData.sequence[GameRuntimeData.userStep]) {
+                    GameRuntimeData.userStep++;
+                    DOM.displays.arenaScore.textContent = `MATCHED: ${GameRuntimeData.userStep}/4`;
+                    if (GameRuntimeData.userStep === 4) {
+                        clearInterval(GameLoopInterval);
+                        evaluateMiniGameOutcome(true, "PERFECT RECALL MEMORY TUNING!");
+                    }
+                } else {
+                    clearInterval(GameLoopInterval);
+                    evaluateMiniGameOutcome(false, "WRONG SEQUENCE ECHOED.");
+                }
+            });
+
+            visualButtons.push(btn);
+            buttonsContainer.appendChild(btn);
+        });
+
+        DOM.displays.arenaCanvas.appendChild(buttonsContainer);
+
+        // Flash sequence animation timeline loop
+        let flashIdx = 0;
+        const flashInterval = setInterval(() => {
+            if (flashIdx < sequence.length) {
+                const targetBtn = visualButtons[sequence[flashIdx]];
+                targetBtn.style.opacity = "1";
+                setTimeout(() => { targetBtn.style.opacity = "0.3"; }, 400);
+                flashIdx++;
+            } else {
+                clearInterval(flashInterval);
+                GameRuntimeData.blockInput = false;
+                DOM.displays.arenaScore.textContent = "YOUR REPEAT TURN!";
+            }
+        }, 700);
+
+        runGlobalArenaTimer(20, () => {
+            evaluateMiniGameOutcome(false, "SIMON DICTATED TIME OUT.");
+        });
+    }
+
+    // --- GAME 6: PIXEL ATTACK ---
+    function setupPixelAttackGame() {
+        const goalScore = 15;
+        GameRuntimeData = { hits: 0 };
+        DOM.displays.arenaScore.textContent = `TARGETS SMASHED: 0/${goalScore}`;
+
+        const gridBoard = document.createElement('div');
+        gridBoard.style.position = "relative";
+        gridBoard.style.width = "100%";
+        gridBoard.style.height = "100%";
+
+        DOM.displays.arenaCanvas.appendChild(gridBoard);
+
+        const spawnAndDropTarget = () => {
+            if (GameRuntimeData.hits >= goalScore || GameTimerCountdown <= 0) return;
+
+            const badBlock = document.createElement('button');
+            badBlock.className = "btn-pixel red";
+            badBlock.textContent = "X";
+            badBlock.style.position = "absolute";
+            badBlock.style.padding = "6px 10px";
+            badBlock.style.top = "10px";
+            badBlock.style.left = Math.floor(Math.random() * (gridBoard.clientWidth - 40)) + "px";
+
+            let fallInterval = setInterval(() => {
+                let currentTop = parseInt(badBlock.style.top) || 0;
+                if (currentTop > 140) {
+                    clearInterval(fallInterval);
+                    badBlock.remove();
+                    // Penalty logic deduction constraint framework
+                    spawnAndDropTarget();
+                } else {
+                    badBlock.style.top = (currentTop + 15) + "px";
+                }
+            }, 120);
+
+            badBlock.addEventListener('click', () => {
+                clearInterval(fallInterval);
+                badBlock.remove();
+                GameRuntimeData.hits++;
+                DOM.displays.arenaScore.textContent = `TARGETS SMASHED: ${GameRuntimeData.hits}/${goalScore}`;
+
+                if (GameRuntimeData.hits >= goalScore) {
+                    clearInterval(GameLoopInterval);
+                    evaluateMiniGameOutcome(true, "RETRO GRID FULLY SANITIZED!");
+                } else {
+                    spawnAndDropTarget();
+                }
+            });
+
+            gridBoard.appendChild(badBlock);
+        };
+
+        spawnAndDropTarget();
+        spawnAndDropTarget(); // Secondary threat intercept tracking loops
+
+        runGlobalArenaTimer(20, () => {
+            evaluateMiniGameOutcome(false, `INCOMPLETE TERMINATION. INFILTRATED BY BLOCKS.`);
+        });
+    }
+
+    // --- GAME 7: MAZE ESCAPE ---
+    function setupMazeEscapeGame() {
+        DOM.displays.arenaScore.textContent = "REACH THE GREEN SQUARE!";
+        
+        const mazeContainer = document.createElement('div');
+        mazeContainer.style.position = "relative";
+        mazeContainer.style.width = "150px";
+        mazeContainer.style.height = "150px";
+        mazeContainer.style.backgroundColor = "#111";
+        mazeContainer.style.border = "3px solid var(--panel-border-light)";
+
+        // 5x5 Grid matrix structure mapping (0 = path, 1 = solid walls layout)
+        const layout = [
+            [0, 0, 1, 0, 0],
+            [1, 0, 1, 0, 1],
+            [0, 0, 0, 0, 0],
+            [0, 1, 1, 1, 0],
+            [0, 0, 0, 1, 0] // Target point at [4,4]
+        ];
+
+        // Draw structural map components inside canvas
+        for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+                if (layout[r][c] === 1) {
+                    const block = document.createElement('div');
+                    block.style.position = "absolute";
+                    block.style.width = "30px";
+                    block.style.height = "30px";
+                    block.style.backgroundColor = "#2c388c";
+                    block.style.top = (r * 30) + "px";
+                    block.style.left = (c * 30) + "px";
+                    mazeContainer.appendChild(block);
+                }
+            }
+        }
+
+        // Win Goal Square rendering
+        const targetElement = document.createElement('div');
+        targetElement.style.position = "absolute";
+        targetElement.style.width = "30px";
+        targetElement.style.height = "30px";
+        targetElement.style.backgroundColor = "#38b000";
+        targetElement.style.top = "120px";
+        targetElement.style.left = "120px";
+        mazeContainer.appendChild(targetElement);
+
+        // Player micro token element
+        const explorerToken = document.createElement('div');
+        explorerToken.style.position = "absolute";
+        explorerToken.style.width = "20px";
+        explorerToken.style.height = "20px";
+        explorerToken.style.margin = "5px";
+        explorerToken.style.backgroundColor = "#ffea00";
+        explorerToken.style.top = "0px";
+        explorerToken.style.left = "0px";
+        mazeContainer.appendChild(explorerToken);
+
+        // Movement Directional UI Controls Grid Box layout
+        const controlsPad = document.createElement('div');
+        controlsPad.style.display = "grid";
+        controlsPad.style.gridTemplateColumns = "repeat(3, 1fr)";
+        controlsPad.style.gap = "4px";
+        controlsPad.style.marginLeft = "15px";
+
+        GameRuntimeData = { pR: 0, pC: 0 };
+
+        const processDirection = (dr, dc) => {
+            const nextR = GameRuntimeData.pR + dr;
+            const nextC = GameRuntimeData.pC + dc;
+            
+            if (nextR >= 0 && nextR < 5 && nextC >= 0 && nextC < 5) {
+                if (layout[nextR][nextC] !== 1) {
+                    GameRuntimeData.pR = nextR;
+                    GameRuntimeData.pC = nextC;
+                    explorerToken.style.top = (nextR * 30) + "px";
+                    explorerToken.style.left = (nextC * 30) + "px";
+
+                    if (nextR === 4 && nextC === 4) {
+                        clearInterval(GameLoopInterval);
+                        evaluateMiniGameOutcome(true, "MAZE CORE ESCAPED SUCCESSFULLY!");
+                    }
+                }
+            }
+        };
+
+        const createDirectionalButton = (label, dr, dc) => {
+            const b = document.createElement('button');
+            b.className = "btn-pixel small";
+            b.textContent = label;
+            b.addEventListener('click', () => processDirection(dr, dc));
+            return b;
+        };
+
+        const spacer = () => document.createElement('div');
+
+        controlsPad.appendChild(spacer());
+        controlsPad.appendChild(createDirectionalButton("U", -1, 0));
+        controlsPad.appendChild(spacer());
+        controlsPad.appendChild(createDirectionalButton("L", 0, -1));
+        controlsPad.appendChild(createDirectionalButton("D", 1, 0));
+        controlsPad.appendChild(createDirectionalButton("R", 0, 1));
+
+        DOM.displays.arenaCanvas.appendChild(mazeContainer);
+        DOM.displays.arenaCanvas.appendChild(controlsPad);
+
+        runGlobalArenaTimer(25, () => {
+            evaluateMiniGameOutcome(false, "LOST INSIDE THE LABYRINTH GEOMETRY.");
         });
     }
 
