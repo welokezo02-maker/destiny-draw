@@ -7,7 +7,463 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* ==========================================================================
+           EMBEDDED STYLES
+           ========================================================================== */
+        :root {
+            --bg-dark: #070913;
+            --panel-bg: rgba(20, 27, 77, 0.4);
+            --panel-border: #00b4d8;
+            --panel-border-light: #90e0ef;
+            --accent-red: #ff0055;
+            --accent-green: #38b000;
+            --accent-cyan: #00f0ff;
+            --text-color: #e2eafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        #app-viewport {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-image: 
+                radial-gradient(rgba(18, 24, 74, 0.95) 60%, rgba(7, 9, 19, 1) 100%),
+                linear-gradient(0deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+        }
+
+        header {
+            height: 60px;
+            border-bottom: 2px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            background: rgba(7, 9, 19, 0.8);
+            z-index: 10;
+        }
+
+        .header-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.25rem;
+            letter-spacing: 2px;
+        }
+
+        .glow-text {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        #game-stage {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        .view {
+            display: none;
+            width: 100%;
+            max-width: 480px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .view.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .card-hero {
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 25px 20px;
+            box-shadow: 0 0 20px rgba(0, 180, 216, 0.2);
+        }
+
+        .card-hero h2 {
+            font-family: 'Orbitron', sans-serif;
+            margin-top: 0;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--panel-border-light);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--panel-border);
+            border-radius: 4px;
+            padding: 14px;
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        .btn-pixel {
+            background: #10002b;
+            border: 2px solid var(--panel-border);
+            border-radius: 4px;
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 15px 20px;
+            text-transform: uppercase;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.1s ease;
+        }
+
+        .btn-pixel:active {
+            transform: scale(0.95);
+        }
+
+        .btn-pixel.primary {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
+            color: #fff;
+        }
+
+        .btn-pixel.secondary {
+            border-color: var(--accent-green);
+            background: rgba(56, 176, 0, 0.1);
+        }
+
+        .btn-pixel.danger {
+            border-color: var(--accent-red);
+            background: rgba(255, 0, 85, 0.1);
+        }
+
+        .btn-pixel.small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .countdown-circle {
+            width: 100px;
+            height: 100px;
+            border: 4px solid var(--accent-cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto 0;
+            font-size: 2.5rem;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 10px var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+
+        .arena-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .timer-badge {
+            background: var(--accent-red);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        #arena-score-tracking {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: var(--panel-border-light);
+        }
+
+        #arena-surface {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--panel-border);
+            border-radius: 8px;
+            height: 320px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chrono-target-zone {
+            width: 80px;
+            height: 80px;
+            border: 3px dashed var(--accent-cyan);
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chrono-tracker-ring {
+            width: 200px;
+            height: 200px;
+            border: 3px solid var(--accent-red);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 240px;
+            height: 240px;
+        }
+
+        .matrix-node {
+            background: #141b4d;
+            border: 2px solid var(--panel-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .matrix-node.flash {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        .cyber-bubble {
+            width: 45px;
+            height: 45px;
+            background: radial-gradient(circle at 30% 30%, #ff0055, #80002a);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 10px var(--accent-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #role-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .role-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border-light);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .role-card:active {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        #randomizer-machine {
+            margin-top: 20px;
+        }
+
+        #randomizer-roulette {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent-red);
+            text-shadow: 0 0 10px var(--accent-red);
+            padding: 20px;
+            border: 2px dashed var(--accent-red);
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .reveal-card {
+            background: var(--panel-bg);
+            border: 3px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 280px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            text-shadow: 0 0 10px var(--accent-cyan);
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        #status-tray {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #0d0f22;
+            border-top: 3px solid var(--panel-border);
+            z-index: 100;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+            max-height: 80%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #status-tray.active {
+            transform: translateY(0);
+        }
+
+        .tray-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        .tray-header h3 {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .tray-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .tray-section {
+            margin-bottom: 20px;
+        }
+
+        .tray-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.9rem;
+            color: var(--panel-border-light);
+        }
+
+        #roles-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        #roles-list li {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        #roles-list li.taken {
+            border-color: var(--accent-red);
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: line-through;
+        }
+
+        #history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            color: var(--panel-border-light);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
     <div id="app-viewport">
@@ -17,7 +473,7 @@
             <button id="btn-toggle-tray" class="btn-pixel small">📋 STATUS</button>
         </header>
 
-        <!-- MAIN INTERACTIVE STAGE -->
+        <!-- MAIN STAGE -->
         <main id="game-stage">
             
             <!-- VIEW 1: REGISTRATION -->
@@ -38,7 +494,7 @@
                     <h2 id="intro-game-title">ROUND 1/3</h2>
                     <div class="game-meta-box">
                         <h3 id="intro-game-name" class="glow-text">GAME NAME</h3>
-                        <p id="intro-game-desc">Game instructions go here.</p>
+                        <p id="intro-game-desc">Game instructions.</p>
                     </div>
                     <div class="countdown-circle">
                         <span id="intro-countdown">3</span>
@@ -52,10 +508,7 @@
                     <span id="arena-game-name" class="glow-text">GAME</span>
                     <span id="arena-timer" class="timer-badge">15s</span>
                 </div>
-                
                 <div id="arena-score-tracking">SCORE: 0/10</div>
-
-                <!-- Game Elements will spawn natively inside here -->
                 <div id="arena-surface"></div>
             </section>
 
@@ -63,8 +516,8 @@
             <section id="view-game-result" class="view">
                 <div class="card-hero text-center">
                     <h2 id="result-status-title" class="glow-text">VICTORY</h2>
-                    <p id="result-status-desc">You surpassed the system constraints.</p>
-                    <button id="btn-continue-journey" class="btn-pixel primary">CONTINUE PROVING GROUND</button>
+                    <p id="result-status-desc">Trial completed.</p>
+                    <button id="btn-continue-journey" class="btn-pixel primary">CONTINUE PROTOCOL</button>
                 </div>
             </section>
 
@@ -72,12 +525,8 @@
             <section id="view-destiny" class="view">
                 <div class="card-hero text-center">
                     <h2 id="destiny-title">VAULT STATUS</h2>
-                    <p id="destiny-subtitle">Analyzing performance data...</p>
-
-                    <!-- Option A: Manual Choice Selection Grid -->
+                    <p id="destiny-subtitle">Analyzing database...</p>
                     <div id="role-selection-grid" class="hidden"></div>
-
-                    <!-- Option B: Automatic Randomizer Slot Machine -->
                     <div id="randomizer-machine" class="hidden">
                         <div id="randomizer-roulette">???</div>
                         <button id="btn-trigger-roulette" class="btn-pixel secondary">RUN ROULETTE</button>
@@ -118,7 +567,7 @@
 
         </main>
 
-        <!-- COLLAPSIBLE STATUS TRAY (Ideal for Mobile Bottom-Sheet UX) -->
+        <!-- STATUS TRAY -->
         <div id="status-tray">
             <div class="tray-header">
                 <h3>SYSTEM STATUS</h3>
@@ -137,5 +586,560 @@
             </div>
         </div>
     </div>
+
+    <!-- ==========================================================================
+         EMBEDDED GAME SCRIPTS (GUARANTEED NO DISCONNECTIONS)
+         ========================================================================== -->
+    <script>
+        (function () {
+            'use strict';
+
+            const DEFINED_ROLES = [
+                "Leader", "Opening Prayer", "Scripture Reading", "Offertory Prayer",
+                "Offering Collection", "Volunteer", "Announcements", "Icebreaker",
+                "Closing Prayer", "Game Host", "Worship Assistant"
+            ];
+
+            const STORAGE_KEY = "destiny_draw_mobile_v2";
+
+            const MINI_GAMES = [
+                { id: 0, name: "CHRONO TAP", desc: "TAP WHEN THE SHRINKING RING MATCHES THE TARGET CIRCLE ZONE!" },
+                { id: 1, name: "NEON MATRIX", desc: "WATCH AND MEMORIZE THE FLASHING COLOR GRID SEQUENCE!" },
+                { id: 2, name: "CYBER POP", desc: "TAP EVERY RISING BUBBLE BEFORE TIME RUNS OUT!" }
+            ];
+
+            let AppState = {
+                assignedRoles: {},
+                history: [],
+                currentPlayer: { name: "", wins: 0, gamesPlayed: 0, gamePool: [] }
+            };
+
+            let GameLoopInterval = null;
+            let GameTimerCountdown = 0;
+            let GameRuntimeData = {};
+
+            // Cache DOM mappings directly inside a global reference object
+            const DOM = {};
+
+            function init() {
+                DOM.viewport = document.getElementById('app-viewport');
+                DOM.views = {
+                    inputName: document.getElementById('view-input-name'),
+                    gameIntro: document.getElementById('view-game-intro'),
+                    gameArena: document.getElementById('view-game-arena'),
+                    gameResult: document.getElementById('view-game-result'),
+                    destiny: document.getElementById('view-destiny'),
+                    resolution: document.getElementById('view-resolution'),
+                    summary: document.getElementById('view-summary')
+                };
+                DOM.inputs = {
+                    playerName: document.getElementById('player-name-input')
+                };
+                DOM.buttons = {
+                    startJourney: document.getElementById('btn-start-journey'),
+                    continueJourney: document.getElementById('btn-continue-journey'),
+                    triggerRoulette: document.getElementById('btn-trigger-roulette'),
+                    finishTurn: document.getElementById('btn-finish-turn'),
+                    restartFull: document.getElementById('btn-restart-full'),
+                    resetSession: document.getElementById('btn-reset-session'),
+                    toggleTray: document.getElementById('btn-toggle-tray'),
+                    closeTray: document.getElementById('btn-close-tray')
+                };
+                DOM.displays = {
+                    statusTray: document.getElementById('status-tray'),
+                    rolesList: document.getElementById('roles-list'),
+                    historyList: document.getElementById('history-list'),
+                    introGameTitle: document.getElementById('intro-game-title'),
+                    introGameName: document.getElementById('intro-game-name'),
+                    introGameDesc: document.getElementById('intro-game-desc'),
+                    introCountdown: document.getElementById('intro-countdown'),
+                    arenaGameName: document.getElementById('arena-game-name'),
+                    arenaTimer: document.getElementById('arena-timer'),
+                    arenaScore: document.getElementById('arena-score-tracking'),
+                    arenaSurface: document.getElementById('arena-surface'),
+                    resultTitle: document.getElementById('result-status-title'),
+                    resultDesc: document.getElementById('result-status-desc'),
+                    destinyTitle: document.getElementById('destiny-title'),
+                    destinySubtitle: document.getElementById('destiny-subtitle'),
+                    roleGrid: document.getElementById('role-selection-grid'),
+                    randomizerMachine: document.getElementById('randomizer-machine'),
+                    randomizerRoulette: document.getElementById('randomizer-roulette'),
+                    resolutionTitle: document.getElementById('resolution-outcome-title'),
+                    resolvedCardInner: document.querySelector('#resolved-role-card .card-inner'),
+                    summaryTableBody: document.getElementById('summary-table-body')
+                };
+
+                loadSession();
+                setupGlobalEvents();
+                updateUI();
+                routeViewOnStart();
+            }
+
+            function saveSession() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
+            }
+
+            function loadSession() {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    try { AppState = JSON.parse(stored); } catch (e) { resetEngine(); }
+                }
+            }
+
+            function resetEngine() {
+                AppState = {
+                    assignedRoles: {},
+                    history: [],
+                    currentPlayer: { name: "", wins: 0, gamesPlayed: 0, gamePool: [] }
+                };
+                saveSession();
+            }
+
+            function switchView(viewKey) {
+                Object.keys(DOM.views).forEach(k => {
+                    if (DOM.views[k]) {
+                        DOM.views[k].classList.toggle('active', k === viewKey);
+                    }
+                });
+            }
+
+            function routeViewOnStart() {
+                const remaining = getRemainingRoles();
+                if (remaining.length === 0 && Object.keys(AppState.assignedRoles).length > 0) {
+                    buildSummaryScreen();
+                    switchView('summary');
+                } else if (AppState.currentPlayer && AppState.currentPlayer.name) {
+                    if (AppState.currentPlayer.gamesPlayed >= 3) {
+                        setupDestinyAllocationView();
+                        switchView('destiny');
+                    } else {
+                        beginGameIntroduction();
+                    }
+                } else {
+                    switchView('inputName');
+                }
+            }
+
+            function updateUI() {
+                if (DOM.displays.rolesList) {
+                    DOM.displays.rolesList.innerHTML = "";
+                    DEFINED_ROLES.forEach(role => {
+                        const li = document.createElement('li');
+                        li.textContent = role;
+                        if (AppState.assignedRoles[role]) {
+                            li.classList.add('taken');
+                            li.textContent += ` (${AppState.assignedRoles[role]})`;
+                        }
+                        DOM.displays.rolesList.appendChild(li);
+                    });
+                }
+
+                if (DOM.displays.historyList) {
+                    DOM.displays.historyList.innerHTML = "";
+                    [...AppState.history].reverse().slice(0, 5).forEach(h => {
+                        const el = document.createElement('div');
+                        el.className = "history-item";
+                        el.innerHTML = `<span>${h.name}</span><span class="glow-text">${h.role}</span>`;
+                        DOM.displays.historyList.appendChild(el);
+                    });
+                }
+            }
+
+            function getRemainingRoles() {
+                return DEFINED_ROLES.filter(r => !AppState.assignedRoles[r]);
+            }
+
+            function handleUserRegistration() {
+                const nameInput = DOM.inputs.playerName;
+                if (!nameInput) return;
+                
+                const name = nameInput.value.trim();
+                if (!name) {
+                    alert("Please enter a callsign!");
+                    return;
+                }
+
+                if (getRemainingRoles().length === 0) {
+                    alert("ALL ROLES ASSIGNED!");
+                    buildSummaryScreen();
+                    switchView('summary');
+                    return;
+                }
+
+                AppState.currentPlayer = {
+                    name: name,
+                    wins: 0,
+                    gamesPlayed: 0,
+                    gamePool: [0, 1, 2].sort(() => 0.5 - Math.random())
+                };
+                saveSession();
+                beginGameIntroduction();
+            }
+
+            function beginGameIntroduction() {
+                switchView('gameIntro');
+                const activeGameId = AppState.currentPlayer.gamePool[AppState.currentPlayer.gamesPlayed];
+                const meta = MINI_GAMES.find(g => g.id === activeGameId);
+
+                if (DOM.displays.introGameTitle) DOM.displays.introGameTitle.textContent = `ROUND ${AppState.currentPlayer.gamesPlayed + 1}/3`;
+                if (DOM.displays.introGameName) DOM.displays.introGameName.textContent = meta.name;
+                if (DOM.displays.introGameDesc) DOM.displays.introGameDesc.textContent = meta.desc;
+
+                let leftCount = 3;
+                if (DOM.displays.introCountdown) DOM.displays.introCountdown.textContent = leftCount;
+
+                const countdown = setInterval(() => {
+                    leftCount--;
+                    if (leftCount > 0) {
+                        if (DOM.displays.introCountdown) DOM.displays.introCountdown.textContent = leftCount;
+                    } else if (leftCount === 0) {
+                        if (DOM.displays.introCountdown) DOM.displays.introCountdown.textContent = "GO!";
+                    } else {
+                        clearInterval(countdown);
+                        startActiveArena(activeGameId, meta.name);
+                    }
+                }, 800);
+            }
+
+            function runGlobalCountdown(sec, triggerEnd) {
+                GameTimerCountdown = sec;
+                if (DOM.displays.arenaTimer) DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
+                
+                GameLoopInterval = setInterval(() => {
+                    GameTimerCountdown--;
+                    if (DOM.displays.arenaTimer) DOM.displays.arenaTimer.textContent = `${GameTimerCountdown}s`;
+                    
+                    if (GameTimerCountdown <= 0) {
+                        clearInterval(GameLoopInterval);
+                        triggerEnd();
+                    }
+                }, 1000);
+            }
+
+            function startActiveArena(gameId, name) {
+                switchView('gameArena');
+                if (DOM.displays.arenaGameName) DOM.displays.arenaGameName.textContent = name;
+                if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.innerHTML = "";
+
+                if (GameLoopInterval) clearInterval(GameLoopInterval);
+
+                if (gameId === 0) startChronoTap();
+                else if (gameId === 1) startNeonMatrix();
+                else if (gameId === 2) startCyberPop();
+            }
+
+            function concludeGame(isWin, summary) {
+                if (GameLoopInterval) clearInterval(GameLoopInterval);
+                if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.innerHTML = "";
+
+                AppState.currentPlayer.gamesPlayed++;
+                if (isWin) {
+                    AppState.currentPlayer.wins++;
+                    if (DOM.displays.resultTitle) {
+                        DOM.displays.resultTitle.textContent = "VICTORY";
+                        DOM.displays.resultTitle.className = "glow-text";
+                    }
+                } else {
+                    if (DOM.displays.resultTitle) {
+                        DOM.displays.resultTitle.textContent = "DEFEAT";
+                        DOM.displays.resultTitle.className = "";
+                    }
+                }
+
+                if (DOM.displays.resultDesc) DOM.displays.resultDesc.textContent = `${summary} (SCORE: ${AppState.currentPlayer.wins}/${AppState.currentPlayer.gamesPlayed})`;
+                saveSession();
+                switchView('gameResult');
+            }
+
+            // CHRONO TAP
+            function startChronoTap() {
+                if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = "TAP WHEN CIRCLES MATCH!";
+                
+                const centerCore = document.createElement('div');
+                centerCore.className = "chrono-target-zone";
+                
+                const shrinker = document.createElement('div');
+                shrinker.className = "chrono-tracker-ring";
+                
+                centerCore.appendChild(shrinker);
+                if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(centerCore);
+
+                const trigger = document.createElement('button');
+                trigger.className = "btn-pixel primary";
+                trigger.textContent = "ALIGN!";
+                trigger.style.position = "absolute";
+                trigger.style.bottom = "20px";
+                if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(trigger);
+
+                let size = 200;
+                const animationLoop = setInterval(() => {
+                    size -= 3;
+                    if (size <= 20) size = 200;
+                    shrinker.style.width = size + "px";
+                    shrinker.style.height = size + "px";
+                }, 20);
+
+                trigger.addEventListener('click', () => {
+                    clearInterval(animationLoop);
+                    if (size >= 65 && size <= 95) {
+                        concludeGame(true, "PERFECT TIMING!");
+                    } else {
+                        concludeGame(false, "MISSED THE ZONE.");
+                    }
+                });
+
+                runGlobalCountdown(10, () => {
+                    clearInterval(animationLoop);
+                    concludeGame(false, "OUT OF TIME.");
+                });
+            }
+
+            // NEON MATRIX
+            function startNeonMatrix() {
+                if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = "MEMORIZE THE PATTERN...";
+
+                const grid = document.createElement('div');
+                grid.className = "matrix-grid";
+
+                const cells = [];
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = "matrix-node";
+                    cell.dataset.index = i;
+                    grid.appendChild(cell);
+                    cells.push(cell);
+                }
+                if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(grid);
+
+                const seq = Array.from({ length: 4 }, () => Math.floor(Math.random() * 9));
+                GameRuntimeData = { steps: 0, activeInput: false };
+
+                let flashStep = 0;
+                const runFlashes = setInterval(() => {
+                    if (flashStep < seq.length) {
+                        const target = cells[seq[flashStep]];
+                        if (target) {
+                            target.classList.add('flash');
+                            setTimeout(() => target.classList.remove('flash'), 350);
+                        }
+                        flashStep++;
+                    } else {
+                        clearInterval(runFlashes);
+                        GameRuntimeData.activeInput = true;
+                        if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = "YOUR TURN!";
+                    }
+                }, 700);
+
+                cells.forEach((node, idx) => {
+                    node.addEventListener('click', () => {
+                        if (!GameRuntimeData.activeInput) return;
+
+                        node.classList.add('flash');
+                        setTimeout(() => node.classList.remove('flash'), 150);
+
+                        if (idx === seq[GameRuntimeData.steps]) {
+                            GameRuntimeData.steps++;
+                            if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = `STEPS: ${GameRuntimeData.steps}/4`;
+                            
+                            if (GameRuntimeData.steps === 4) {
+                                concludeGame(true, "SEQUENCE MATCHED!");
+                            }
+                        } else {
+                            concludeGame(false, "WRONG NODE.");
+                        }
+                    });
+                });
+
+                runGlobalCountdown(15, () => {
+                    concludeGame(false, "OUT OF TIME.");
+                });
+            }
+
+            // CYBER POP
+            function startCyberPop() {
+                const countRequired = 8;
+                GameRuntimeData = { popped: 0 };
+                if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = `POPPED: 0/${countRequired}`;
+
+                const surfaceW = DOM.displays.arenaSurface ? DOM.displays.arenaSurface.offsetWidth : 300;
+
+                function spawn() {
+                    if (GameRuntimeData.popped >= countRequired || GameTimerCountdown <= 0) return;
+
+                    const b = document.createElement('div');
+                    b.className = "cyber-bubble";
+                    b.textContent = Math.floor(Math.random() * 9) + 1;
+                    
+                    const randomX = Math.max(15, Math.min(surfaceW - 60, Math.random() * (surfaceW - 50)));
+                    b.style.left = randomX + "px";
+                    b.style.top = "280px";
+
+                    let rise = 280;
+                    const flight = setInterval(() => {
+                        rise -= 3;
+                        b.style.top = rise + "px";
+
+                        if (rise <= 0) {
+                            clearInterval(flight);
+                            b.remove();
+                            spawn();
+                        }
+                    }, 30);
+
+                    b.addEventListener('click', () => {
+                        clearInterval(flight);
+                        b.remove();
+                        GameRuntimeData.popped++;
+                        if (DOM.displays.arenaScore) DOM.displays.arenaScore.textContent = `POPPED: ${GameRuntimeData.popped}/${countRequired}`;
+
+                        if (GameRuntimeData.popped >= countRequired) {
+                            concludeGame(true, "CLEARED THE BOARD!");
+                        } else {
+                            spawn();
+                        }
+                    });
+
+                    if (DOM.displays.arenaSurface) DOM.displays.arenaSurface.appendChild(b);
+                }
+
+                spawn();
+                spawn();
+
+                runGlobalCountdown(15, () => {
+                    concludeGame(false, `TIMER RAN OUT. POPS: ${GameRuntimeData.popped}/${countRequired}`);
+                });
+            }
+
+            function setupDestinyAllocationView() {
+                const remaining = getRemainingRoles();
+                if (remaining.length === 0) {
+                    buildSummaryScreen();
+                    switchView('summary');
+                    return;
+                }
+
+                if (AppState.currentPlayer.wins >= 2) {
+                    if (DOM.displays.destinyTitle) DOM.displays.destinyTitle.textContent = "VAULT ACQUIRED";
+                    if (DOM.displays.destinySubtitle) DOM.displays.destinySubtitle.textContent = "CHOOSE YOUR ASSIGNMENT:";
+                    if (DOM.displays.roleGrid) DOM.displays.roleGrid.classList.remove('hidden');
+                    if (DOM.displays.randomizerMachine) DOM.displays.randomizerMachine.classList.add('hidden');
+                    
+                    if (DOM.displays.roleGrid) {
+                        DOM.displays.roleGrid.innerHTML = "";
+                        remaining.forEach(role => {
+                            const card = document.createElement('div');
+                            card.className = "role-card";
+                            card.textContent = role;
+                            card.addEventListener('click', () => saveAssignedRole(role));
+                            DOM.displays.roleGrid.appendChild(card);
+                        });
+                    }
+                } else {
+                    if (DOM.displays.destinyTitle) DOM.displays.destinyTitle.textContent = "VAULT SEALED";
+                    if (DOM.displays.destinySubtitle) DOM.displays.destinySubtitle.textContent = "RANDOM SELECTION REQUIRED:";
+                    if (DOM.displays.roleGrid) DOM.displays.roleGrid.classList.add('hidden');
+                    if (DOM.displays.randomizerMachine) DOM.displays.randomizerMachine.classList.remove('hidden');
+                    if (DOM.displays.randomizerRoulette) DOM.displays.randomizerRoulette.textContent = "???";
+                    if (DOM.buttons.triggerRoulette) DOM.buttons.triggerRoulette.classList.remove('disabled');
+                }
+            }
+
+            function runDestinyRoulette() {
+                if (DOM.buttons.triggerRoulette) DOM.buttons.triggerRoulette.classList.add('disabled');
+                const remaining = getRemainingRoles();
+                let counts = 0;
+                
+                const tick = setInterval(() => {
+                    const tempRole = remaining[Math.floor(Math.random() * remaining.length)];
+                    if (DOM.displays.randomizerRoulette) DOM.displays.randomizerRoulette.textContent = tempRole.toUpperCase();
+                    counts++;
+
+                    if (counts >= 12) {
+                        clearInterval(tick);
+                        const absoluteChoice = remaining[Math.floor(Math.random() * remaining.length)];
+                        saveAssignedRole(absoluteChoice);
+                    }
+                }, 120);
+            }
+
+            function saveAssignedRole(finalRole) {
+                const pName = AppState.currentPlayer.name;
+                AppState.assignedRoles[finalRole] = pName;
+                AppState.history.push({ name: pName, role: finalRole });
+
+                AppState.currentPlayer = { name: "", wins: 0, gamesPlayed: 0, gamePool: [] };
+                saveSession();
+                updateUI();
+
+                if (DOM.displays.resolutionTitle) DOM.displays.resolutionTitle.textContent = `${pName.toUpperCase()}'S PROTOCOL`;
+                if (DOM.displays.resolvedCardInner) DOM.displays.resolvedCardInner.textContent = finalRole.toUpperCase();
+                switchView('resolution');
+            }
+
+            function buildSummaryScreen() {
+                if (!DOM.displays.summaryTableBody) return;
+                DOM.displays.summaryTableBody.innerHTML = "";
+                DEFINED_ROLES.forEach(r => {
+                    const tr = document.createElement('tr');
+                    const tdRole = document.createElement('td');
+                    tdRole.textContent = r;
+                    const tdName = document.createElement('td');
+                    tdName.className = AppState.assignedRoles[r] ? "glow-text" : "";
+                    tdName.textContent = AppState.assignedRoles[r] || "VACANT";
+                    tr.appendChild(tdRole);
+                    tr.appendChild(tdName);
+                    DOM.displays.summaryTableBody.appendChild(tr);
+                });
+            }
+
+            function handleHardSystemReset() {
+                if (confirm("RESET SYSTEM? ALL SELECTIONS WILL BE LOST.")) {
+                    resetEngine();
+                    updateUI();
+                    if (DOM.inputs.playerName) DOM.inputs.playerName.value = "";
+                    switchView('inputName');
+                }
+            }
+
+            function toggleStatusTray(isOpen) {
+                if (DOM.displays.statusTray) {
+                    DOM.displays.statusTray.classList.toggle('active', isOpen);
+                }
+            }
+
+            function setupGlobalEvents() {
+                if (DOM.buttons.startJourney) DOM.buttons.startJourney.addEventListener('click', handleUserRegistration);
+                if (DOM.buttons.continueJourney) {
+                    DOM.buttons.continueJourney.addEventListener('click', () => {
+                        if (AppState.currentPlayer.gamesPlayed >= 3) {
+                            setupDestinyAllocationView();
+                            switchView('destiny');
+                        } else {
+                            beginGameIntroduction();
+                        }
+                    });
+                }
+                if (DOM.buttons.triggerRoulette) DOM.buttons.triggerRoulette.addEventListener('click', runDestinyRoulette);
+                if (DOM.buttons.finishTurn) {
+                    DOM.buttons.finishTurn.addEventListener('click', () => {
+                        if (getRemainingRoles().length === 0) {
+                            buildSummaryScreen();
+                            switchView('summary');
+                        } else {
+                            if (DOM.inputs.playerName) DOM.inputs.playerName.value = "";
+                            switchView('inputName');
+                        }
+                    });
+                }
+                if (DOM.buttons.restartFull) DOM.buttons.restartFull.addEventListener('click', handleHardSystemReset);
+                if (DOM.buttons.resetSession) DOM.buttons.resetSession.addEventListener('click', handleHardSystemReset);
+
+                if (DOM.buttons.toggleTray) DOM.buttons.toggleTray.addEventListener('click', () => toggleStatusTray(true));
+                if (DOM.buttons.closeTray) DOM.buttons.closeTray.addEventListener('click', () => toggleStatusTray(false));
+            }
+
+            init();
+        }());
+    </script>
 </body>
 </html>
