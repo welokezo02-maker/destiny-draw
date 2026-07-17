@@ -1093,4 +1093,18 @@
     }
 
     document.addEventListener('DOMContentLoaded', init);
+   // ---------------------------------------------------------
+    // SYSTEM EASTER EGG: ARCADE MATRIX CHEAT CODE
+    // ---------------------------------------------------------
+    window.unlockMatrixMode = function() {
+        console.log("%c🔴 MATRIX MODE ACTIVATED 🔴", "color: #38b000; font-size: 16px; font-weight: bold;");
+        document.documentElement.style.setProperty('--panel-bg', '#000000');
+        document.documentElement.style.setProperty('--panel-border', '#38b000');
+        document.documentElement.style.setProperty('--panel-border-light', '#00ff00');
+        document.documentElement.style.setProperty('--accent-cyan', '#00ff00');
+        FX.flash('green', DOM.appContainer);
+        return "The simulation has been updated.";
+    };
+    console.log("%c🎮 DESTINY ARCHITECTURE RUNNING v1.0.0", "color: #00b4d8; font-weight: bold;");
+    console.log("Type 'unlockMatrixMode()' to override system visuals.");
 }());
