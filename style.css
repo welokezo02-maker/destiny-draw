@@ -411,3 +411,42 @@ footer {
     right: 15px;
     z-index: 10;
 }
+
+/* ==========================================================================
+   RESPONSIVE MOBILE OVERRIDES 
+   ========================================================================== */
+@media (max-width: 768px) {
+    #app-container {
+        grid-template-columns: 1fr; /* Stack sidebar and stage vertically */
+        grid-template-rows: auto 1fr;
+        height: auto;
+        min-height: 100vh;
+        width: 100vw;
+        border: none;
+        box-shadow: none;
+    }
+
+    aside#sidebar {
+        border-right: none;
+        border-bottom: 4px solid var(--panel-border);
+        padding: 15px;
+        max-height: 250px; /* Keep sidebar compact on mobile scroll */
+    }
+
+    main#main-stage {
+        padding: 15px;
+        min-height: 500px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    input[type="text"] {
+        width: 100%;
+    }
+
+    #role-selection-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+}
